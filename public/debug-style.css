@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #eee;
+    margin: 0;
+    padding: 20px;
+}
+
+canvas {
+    background: #222;
+    border: 2px solid #555;
+    display: block;
+    margin-top: 16px;
+}
+
+button {
+    padding: 8px 12px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.panel {
+    margin-top: 12px;
+    display: flex;
+    gap: 24px;
+}
+
+.box {
+    background: #1e1e1e;
+    padding: 12px;
+    border-radius: 8px;
+    min-width: 220px;
+}
+
+.hint {
+    color: #bbb;
+    margin-top: 8px;
+}

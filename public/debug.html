@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Multiplayer Debug Client</title>
+    <link rel="stylesheet" href="/public/debug-style.css" />
+</head>
+<body>
+<h1>Multiplayer Debug Client</h1>
+
+<button id="startButton">Start debug match</button>
+<button id="stopButton">Stop movement</button>
+
+<p class="hint">
+    Daniel: W A S D | Opponent: Arrow keys
+</p>
+
+<div class="panel">
+    <div class="box">
+        <h2>Daniel</h2>
+        <pre id="danielInfo">Not connected</pre>
+    </div>
+
+    <div class="box">
+        <h2>Opponent</h2>
+        <pre id="opponentInfo">Not connected</pre>
+    </div>
+
+    <div class="box">
+        <h2>Match</h2>
+        <pre id="matchInfo">Not started</pre>
+    </div>
+</div>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script src="/public/debug-client.js"></script>
+</body>
+</html>
