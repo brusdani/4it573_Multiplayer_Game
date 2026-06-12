@@ -18,6 +18,11 @@ export type ServerMessage =
     type: 'connected'
     message: string
 }
+    |{
+    type: 'joined'
+    playerId: string
+    nickname: string
+}
     | {
     type: 'waiting'
     playerId: string

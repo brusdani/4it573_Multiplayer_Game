@@ -57,6 +57,12 @@ export const registerWebSocketRoute = (
 
                         currentPlayerId = player.id
 
+                        send(ws, {
+                            type: 'joined',
+                            playerId: player.id,
+                            nickname: player.nickname,
+                        })
+
                         console.log(`${player.nickname} joined`)
 
                         const matchmakingResult =
