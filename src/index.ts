@@ -1,11 +1,22 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
+import { loadGameConfig } from './config/game-config.js'
+import { createRoomService } from './game/room.service.js'
 import { registerWebSocketRoute } from './websocket/ws.route.js'
 
-const app = new Hono()
+const config = await loadGameConfig()
 
-const { injectWebSocket } = registerWebSocketRoute(app)
+console.log('Game configuration loaded:', config)
+
+const app = new Hono()
+const roomService = createRoomService(config)
+
+const { injectWebSocket } = registerWebSocketRoute(
+    app,
+    config,
+    roomService,
+)
 
 app.get('/', (c) => {
     return c.text('Node.js multiplayer game server is running')

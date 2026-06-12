@@ -1,4 +1,5 @@
 import type { WSContext } from 'hono/ws'
+import type { Position } from '../config/game-config.js'
 
 export type PlayerId = string
 export type RoomId = string
@@ -20,10 +21,7 @@ export type Player = {
     ws: WSContext<WebSocket>
 }
 
-export type Item = {
-    x: number
-    y: number
-}
+export type Item = Position
 
 export type Room = {
     id: RoomId

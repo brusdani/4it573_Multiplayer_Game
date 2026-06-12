@@ -1,9 +1,13 @@
-import {
-    ARENA_HEIGHT,
-    ARENA_WIDTH,
-} from './game.constants.js'
-import type { InputState, Item, Player } from './game.types.js'
 import type { WSContext } from 'hono/ws'
+import type {
+    GameConfig,
+    Position,
+} from '../config/game-config.js'
+import type {
+    InputState,
+    Item,
+    Player,
+} from './game.types.js'
 
 export const randomId = () => crypto.randomUUID()
 
@@ -14,19 +18,29 @@ export const defaultInputState = (): InputState => ({
     right: false,
 })
 
-export const randomItem = (): Item => ({
-    x: Math.floor(Math.random() * ARENA_WIDTH),
-    y: Math.floor(Math.random() * ARENA_HEIGHT),
-})
+const randomArrayItem = <T>(items: T[]): T => {
+    const index = Math.floor(Math.random() * items.length)
+    return items[index]
+}
+
+export const randomItem = (config: GameConfig): Item => {
+    const spawnPoint = randomArrayItem(config.itemSpawnPoints)
+
+    return {
+        x: spawnPoint.x,
+        y: spawnPoint.y,
+    }
+}
 
 export const createPlayer = (
     nickname: string,
     ws: WSContext<WebSocket>,
+    spawnPoint: Position,
 ): Player => ({
     id: randomId(),
     nickname,
-    x: Math.floor(Math.random() * ARENA_WIDTH),
-    y: Math.floor(Math.random() * ARENA_HEIGHT),
+    x: spawnPoint.x,
+    y: spawnPoint.y,
     score: 0,
     input: defaultInputState(),
     ws,

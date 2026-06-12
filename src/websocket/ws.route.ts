@@ -1,18 +1,21 @@
 import type { Hono } from 'hono'
 import { createNodeWebSocket } from '@hono/node-ws'
+
+import type { GameConfig } from '../config/game-config.js'
 import type { PlayerId } from '../game/game.types.js'
 import { createPlayer } from '../game/game.utils.js'
-import {
-    addPlayerToMatchmaking,
-    findRoomByPlayerId,
-    removePlayer,
-    updatePlayerInput,
-} from '../game/room.service.js'
+import type { RoomService } from '../game/room.service.js'
 import type { ClientMessage } from './ws.types.js'
 import { send } from './ws.utils.js'
 
-export const registerWebSocketRoute = (app: Hono) => {
-    const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app })
+export const registerWebSocketRoute = (
+    app: Hono,
+    config: GameConfig,
+    roomService: RoomService,
+) => {
+    const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({
+        app,
+    })
 
     app.get(
         '/ws',
@@ -37,16 +40,23 @@ export const registerWebSocketRoute = (app: Hono) => {
                             type: 'error',
                             message: 'Invalid JSON',
                         })
+
                         return
                     }
 
                     if (message.type === 'join') {
-                        const player = createPlayer(message.nickname, ws)
+                        const player = createPlayer(
+                            message.nickname,
+                            ws,
+                            config.playerSpawnPoints[0],
+                        )
+
                         currentPlayerId = player.id
 
                         console.log(`${player.nickname} joined`)
 
-                        const matchmakingResult = addPlayerToMatchmaking(player)
+                        const matchmakingResult =
+                            roomService.addPlayerToMatchmaking(player)
 
                         if (matchmakingResult.status === 'waiting') {
                             send(ws, {
@@ -58,7 +68,10 @@ export const registerWebSocketRoute = (app: Hono) => {
                             return
                         }
 
-                        console.log(`Room ${matchmakingResult.room.id} started`)
+                        console.log(
+                            `Room ${matchmakingResult.room.id} started`,
+                        )
+
                         return
                     }
 
@@ -68,21 +81,27 @@ export const registerWebSocketRoute = (app: Hono) => {
                                 type: 'error',
                                 message: 'Join first',
                             })
+
                             return
                         }
 
-                        const room = findRoomByPlayerId(currentPlayerId)
+                        const room =
+                            roomService.findRoomByPlayerId(currentPlayerId)
 
                         if (!room) {
                             return
                         }
 
-                        updatePlayerInput(currentPlayerId, room, message.input)
+                        roomService.updatePlayerInput(
+                            currentPlayerId,
+                            room,
+                            message.input,
+                        )
                     }
                 },
 
                 onClose: (_event, ws) => {
-                    removePlayer(ws)
+                    roomService.removePlayer(ws)
                 },
             }
         }),
