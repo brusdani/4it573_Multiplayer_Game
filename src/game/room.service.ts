@@ -1,5 +1,6 @@
 import type { WSContext } from 'hono/ws'
 import type { GameConfig } from '../config/game-config.js'
+import type { SaveMatchInput } from '../database/match.repository.js'
 import type {
     Player,
     PlayerId,
@@ -11,7 +12,12 @@ import {
 } from './game.utils.js'
 import { broadcast } from '../websocket/ws.utils.js'
 
-export const createRoomService = (config: GameConfig) => {
+type SaveMatch = (match: SaveMatchInput) => Promise<void>
+
+export const createRoomService = (
+    config: GameConfig,
+    saveMatch: SaveMatch
+) => {
     const rooms = new Map<string, Room>()
     let waitingPlayer: Player | null = null
 
@@ -27,7 +33,7 @@ export const createRoomService = (config: GameConfig) => {
         return undefined
     }
 
-    const finishRoom = (room: Room) => {
+    const finishRoom = async (room: Room) => {
         if (room.intervalId) {
             clearInterval(room.intervalId)
         }
@@ -35,14 +41,25 @@ export const createRoomService = (config: GameConfig) => {
         const [player1, player2] = room.players
 
         let winnerId: string | null = null
+        let winnerNickname: string | null = null
 
         if (player1.score > player2.score) {
             winnerId = player1.id
+            winnerNickname = player1.nickname
         }
 
         if (player2.score > player1.score) {
             winnerId = player2.id
+            winnerNickname = player2.nickname
         }
+
+        await saveMatch({
+            player1Nickname: player1.nickname,
+            player2Nickname: player2.nickname,
+            player1Score: player1.score,
+            player2Score: player2.score,
+            winnerNickname,
+        })
 
         broadcast(room, {
             type: 'gameOver',
@@ -111,8 +128,14 @@ export const createRoomService = (config: GameConfig) => {
             })),
         })
 
-        if (timeLeftMs <= 0) {
-            finishRoom(room)
+        if (timeLeftMs <= 0 && !room.isFinishing) {
+            room.isFinishing = true
+
+            void finishRoom(room).catch((error) => {
+                console.error('Failed to finish room:', error)
+
+                rooms.delete(room.id)
+            })
         }
     }
 
@@ -135,6 +158,7 @@ export const createRoomService = (config: GameConfig) => {
             item: randomItem(config),
             startedAt: Date.now(),
             durationMs: config.matchDurationMs,
+            isFinishing: false,
         }
 
         rooms.set(room.id, room)

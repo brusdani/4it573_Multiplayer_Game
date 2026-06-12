@@ -3,7 +3,7 @@
   "arenaHeight": 600,
   "playerSpeed": 8,
   "pickupDistance": 30,
-  "matchDurationMs": 300000,
+  "matchDurationMs": 10000,
   "playerSpawnPoints": [
     {
       "x": 100,

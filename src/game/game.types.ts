@@ -29,5 +29,6 @@ export type Room = {
     item: Item
     startedAt: number
     durationMs: number
+    isFinishing: boolean
     intervalId?: NodeJS.Timeout
 }
