@@ -6,3 +6,5 @@ dist/
 db.sqlite
 db.sqlite-shm
 db.sqlite-wal
+client/node_modules/
+client/dist/
