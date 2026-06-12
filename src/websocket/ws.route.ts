@@ -5,8 +5,8 @@ import type { GameConfig } from '../config/game-config.js'
 import type { PlayerId } from '../game/game.types.js'
 import { createPlayer } from '../game/game.utils.js'
 import type { RoomService } from '../game/room.service.js'
-import type { ClientMessage } from './ws.types.js'
 import { send } from './ws.utils.js'
+import { parseClientMessage } from './ws.validation.js'
 
 export const registerWebSocketRoute = (
     app: Hono,
@@ -31,20 +31,24 @@ export const registerWebSocketRoute = (
                 },
 
                 onMessage: (event, ws) => {
-                    let message: ClientMessage
+                    const message = parseClientMessage(event.data)
 
-                    try {
-                        message = JSON.parse(String(event.data))
-                    } catch {
+                    if (!message) {
                         send(ws, {
                             type: 'error',
-                            message: 'Invalid JSON',
+                            message: 'Invalid WebSocket message',
                         })
-
                         return
                     }
 
                     if (message.type === 'join') {
+                        if (currentPlayerId) {
+                            send(ws, {
+                                type: 'error',
+                                message: 'Player has already joined',
+                            })
+                            return
+                        }
                         const player = createPlayer(
                             message.nickname,
                             ws,
@@ -89,9 +93,12 @@ export const registerWebSocketRoute = (
                             roomService.findRoomByPlayerId(currentPlayerId)
 
                         if (!room) {
+                            send(ws, {
+                                type: 'error',
+                                message: 'Player is not currently in a match',
+                            })
                             return
                         }
-
                         roomService.updatePlayerInput(
                             currentPlayerId,
                             room,

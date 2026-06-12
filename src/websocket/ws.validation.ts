@@ -1,0 +1,74 @@
+import type { ClientMessage } from './ws.types.js'
+
+const isObject = (
+    value: unknown,
+): value is Record<string, unknown> => {
+    return typeof value === 'object' && value !== null
+}
+
+const isBoolean = (value: unknown): value is boolean => {
+    return typeof value === 'boolean'
+}
+
+const isJoinMessage = (
+    value: Record<string, unknown>,
+): value is Extract<ClientMessage, { type: 'join' }> => {
+    return (
+        value.type === 'join' &&
+        typeof value.nickname === 'string' &&
+        value.nickname.trim().length > 0 &&
+        value.nickname.trim().length <= 20
+    )
+}
+
+const isInputMessage = (
+    value: Record<string, unknown>,
+): value is Extract<ClientMessage, { type: 'input' }> => {
+    if (value.type !== 'input' || !isObject(value.input)) {
+        return false
+    }
+
+    return (
+        isBoolean(value.input.up) &&
+        isBoolean(value.input.down) &&
+        isBoolean(value.input.left) &&
+        isBoolean(value.input.right)
+    )
+}
+
+export const parseClientMessage = (
+    rawData: unknown,
+): ClientMessage | null => {
+    let parsedData: unknown
+
+    try {
+        parsedData = JSON.parse(String(rawData))
+    } catch {
+        return null
+    }
+
+    if (!isObject(parsedData)) {
+        return null
+    }
+
+    if (isJoinMessage(parsedData)) {
+        return {
+            type: 'join',
+            nickname: parsedData.nickname.trim(),
+        }
+    }
+
+    if (isInputMessage(parsedData)) {
+        return {
+            type: 'input',
+            input: {
+                up: parsedData.input.up,
+                down: parsedData.input.down,
+                left: parsedData.input.left,
+                right: parsedData.input.right,
+            },
+        }
+    }
+
+    return null
+}
