@@ -8,6 +8,7 @@ import {
     getMatches,
     saveMatch,
 } from './database/match.repository.js'
+import { getLeaderboard } from './leaderboard/leaderboard.service.js'
 
 const config = await loadGameConfig()
 
@@ -34,6 +35,9 @@ app.get('/debug', (c) => {
 app.get('/matches', async (c) => {
     const matches = await getMatches()
     return c.json(matches)
+})
+app.get('/leaderboard', async (c) => {
+    return c.json(await getLeaderboard())
 })
 
 const server = serve(
