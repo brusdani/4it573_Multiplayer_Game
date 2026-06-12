@@ -18,7 +18,7 @@ export type Player = {
     y: number
     score: number
     input: InputState
-    ws: WSContext<WebSocket>
+    ws: WSContext
 }
 
 export type Item = Position

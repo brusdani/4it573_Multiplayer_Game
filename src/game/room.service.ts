@@ -221,7 +221,7 @@ export const createRoomService = (
         player.input = input
     }
 
-    const removePlayer = (ws: WSContext<WebSocket>) => {
+    const removePlayer = (ws: WSContext) => {
         if (waitingPlayer?.ws === ws) {
             waitingPlayer = null
             console.log('Waiting player disconnected')

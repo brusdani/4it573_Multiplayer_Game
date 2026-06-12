@@ -34,7 +34,7 @@ export const randomItem = (config: GameConfig): Item => {
 
 export const createPlayer = (
     nickname: string,
-    ws: WSContext<WebSocket>,
+    ws: WSContext,
     spawnPoint: Position,
 ): Player => ({
     id: randomId(),

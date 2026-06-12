@@ -1,7 +1,7 @@
 import type { WSContext } from 'hono/ws'
 import type { Room } from '../game/game.types.js'
 
-export const send = (ws: WSContext<WebSocket>, data: unknown) => {
+export const send = (ws: WSContext, data: unknown) => {
     ws.send(JSON.stringify(data))
 }
 
