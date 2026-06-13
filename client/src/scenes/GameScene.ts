@@ -17,7 +17,7 @@ export class GameScene extends Phaser.Scene {
     private itemObject!: Phaser.GameObjects.Arc
     private platformObjects: Phaser.GameObjects.Rectangle[] = []
 
-    private nickname = 'Player'
+    private readonly nickname: string
     private localPlayerId: string | null = null
     private matchActive = false
 
@@ -37,12 +37,12 @@ export class GameScene extends Phaser.Scene {
     }
     private canQueueAgain = false
 
-    constructor() {
+    constructor(nickname: string) {
         super('GameScene')
+        this.nickname = nickname
     }
 
     create(): void {
-        const params = new URLSearchParams(window.location.search)
 
         if (!this.input.keyboard) {
             throw new Error('Keyboard input is unavailable')
@@ -60,8 +60,6 @@ export class GameScene extends Phaser.Scene {
             jump: Phaser.Input.Keyboard.KeyCodes.W,
         }) as typeof this.wasd
 
-        this.nickname =
-            params.get('nickname')?.trim() || 'Player'
         this.statusText = this.add
             .text(400, 300, 'Connecting to server...', {
                 fontSize: '28px',
