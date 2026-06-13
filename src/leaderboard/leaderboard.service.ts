@@ -3,6 +3,8 @@ import { getMatches } from '../database/match.repository.js'
 
 type MutableLeaderboardEntry = Omit<LeaderboardEntry, 'winRate'>
 
+type Match = Awaited<ReturnType<typeof getMatches>>[number]
+
 const getOrCreatePlayer = (
     players: Map<string, MutableLeaderboardEntry>,
     nickname: string,
@@ -27,13 +29,21 @@ const getOrCreatePlayer = (
     return newPlayer
 }
 
-export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
-    const matches = await getMatches()
+export const buildLeaderboard = (
+    matches: Match[],
+): LeaderboardEntry[] => {
     const players = new Map<string, MutableLeaderboardEntry>()
 
     for (const match of matches) {
-        const player1 = getOrCreatePlayer(players, match.player1Nickname)
-        const player2 = getOrCreatePlayer(players, match.player2Nickname)
+        const player1 = getOrCreatePlayer(
+            players,
+            match.player1Nickname,
+        )
+
+        const player2 = getOrCreatePlayer(
+            players,
+            match.player2Nickname,
+        )
 
         player1.gamesPlayed += 1
         player2.gamesPlayed += 1
@@ -74,6 +84,16 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
                 return playerB.totalScore - playerA.totalScore
             }
 
-            return playerA.nickname.localeCompare(playerB.nickname)
+            return playerA.nickname.localeCompare(
+                playerB.nickname,
+            )
         })
+}
+
+export const getLeaderboard = async (): Promise<
+    LeaderboardEntry[]
+> => {
+    const matches = await getMatches()
+
+    return buildLeaderboard(matches)
 }
