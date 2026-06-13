@@ -8,6 +8,13 @@
       "when": 1781223745237,
       "tag": "0000_fresh_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781382604838,
+      "tag": "0001_magenta_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }
