@@ -22,6 +22,7 @@ export class GameScene extends Phaser.Scene {
     private matchActive = false
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
+    private queueKey!: Phaser.Input.Keyboard.Key
 
     private wasd!: {
         left: Phaser.Input.Keyboard.Key
@@ -34,6 +35,7 @@ export class GameScene extends Phaser.Scene {
         right: false,
         jump: false
     }
+    private canQueueAgain = false
 
     constructor() {
         super('GameScene')
@@ -47,6 +49,10 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.cursors = this.input.keyboard.createCursorKeys()
+
+        this.queueKey = this.input.keyboard.addKey(
+            Phaser.Input.Keyboard.KeyCodes.Q,
+        )
 
         this.wasd = this.input.keyboard.addKeys({
             left: Phaser.Input.Keyboard.KeyCodes.A,
@@ -71,6 +77,18 @@ export class GameScene extends Phaser.Scene {
         this.scoreText = this.add.text(20, 55, '', {
             fontSize: '20px',
             color: '#ffffff',
+        })
+        this.statusText.setDepth(10)
+        this.timerText.setDepth(10)
+        this.scoreText.setDepth(10)
+
+        this.statusText.setStyle({
+            backgroundColor: '#000000',
+            padding: {
+                x: 12,
+                y: 8,
+            },
+            align: 'center',
         })
 
 
@@ -104,6 +122,8 @@ export class GameScene extends Phaser.Scene {
 
         if (message.type === 'start') {
             this.matchActive = true
+            this.canQueueAgain = false
+            this.clearPlayers()
             this.statusText.setText('Match started')
             this.drawMap(
                 message.platforms,
@@ -126,17 +146,26 @@ export class GameScene extends Phaser.Scene {
 
         if (message.type === 'gameOver') {
             this.matchActive = false
+            this.canQueueAgain = true
             this.lastInput = {
                 left: false,
                 right: false,
                 jump: false
             }
+            const winner = message.scores.find(
+                (player) => player.playerId === message.winnerId,
+            )
+
+            const scoreLine = message.scores
+                .map((player) => `${player.nickname}: ${player.score}`)
+                .join(' | ')
+
             this.statusText
                 .setVisible(true)
                 .setText(
-                    message.winnerId
-                        ? 'Game over'
-                        : 'Game over — draw',
+                    winner
+                        ? `${winner.nickname} wins!\n${scoreLine}\nPress Q to queue again`
+                        : `Draw!\n${scoreLine}\nPress Q to queue again`,
                 )
 
             return
@@ -147,6 +176,13 @@ export class GameScene extends Phaser.Scene {
                 .setVisible(true)
                 .setText(message.message)
         }
+    }
+    private clearPlayers(): void {
+        for (const playerObject of this.playerObjects.values()) {
+            playerObject.destroy()
+        }
+
+        this.playerObjects.clear()
     }
 
     private drawMap(
@@ -229,6 +265,17 @@ export class GameScene extends Phaser.Scene {
         this.scoreText.setText(scoreLine)
     }
     update(): void {
+        if (
+            this.canQueueAgain &&
+            Phaser.Input.Keyboard.JustDown(this.queueKey)
+        ) {
+            this.statusText
+                .setVisible(true)
+                .setText('Joining queue...')
+
+            this.gameSocket.queue()
+            return
+        }
         if (!this.matchActive) {
             return
         }

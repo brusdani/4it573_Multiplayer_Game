@@ -34,6 +34,11 @@ export const createRoomService = (
 
         return undefined
     }
+    const isPlayerWaiting = (
+        playerId: PlayerId,
+    ): boolean => {
+        return waitingPlayer?.id === playerId
+    }
 
     const finishRoom = async (room: Room) => {
         if (room.intervalId) {
@@ -167,7 +172,7 @@ export const createRoomService = (
 
             if (distance <= config.pickupDistance) {
                 player.score += 1
-                room.item = randomItem(config)
+                room.item = randomItem(config, room.item)
             }
         }
 
@@ -316,6 +321,7 @@ export const createRoomService = (
     return {
         addPlayerToMatchmaking,
         findRoomByPlayerId,
+        isPlayerWaiting,
         removePlayer,
         updatePlayerInput,
     }

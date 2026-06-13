@@ -118,6 +118,17 @@ export class GameSocket {
             }),
         )
     }
+    queue(): void {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            return
+        }
+
+        this.socket.send(
+            JSON.stringify({
+                type: 'queue',
+            }),
+        )
+    }
 
     sendInput(input: InputState): void {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {

@@ -22,8 +22,19 @@ const randomArrayItem = <T>(items: T[]): T => {
     return items[index]
 }
 
-export const randomItem = (config: GameConfig): Item => {
-    const spawnPoint = randomArrayItem(config.itemSpawnPoints)
+export const randomItem = (
+    config: GameConfig,
+    previousItem?: Item,
+): Item => {
+    const availableSpawnPoints = previousItem
+        ? config.itemSpawnPoints.filter(
+            (spawnPoint) =>
+                spawnPoint.x !== previousItem.x ||
+                spawnPoint.y !== previousItem.y,
+        )
+        : config.itemSpawnPoints
+
+    const spawnPoint = randomArrayItem(availableSpawnPoints)
 
     return {
         x: spawnPoint.x,

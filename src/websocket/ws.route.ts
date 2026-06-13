@@ -21,6 +21,7 @@ export const registerWebSocketRoute = (
         '/ws',
         upgradeWebSocket(() => {
             let currentPlayerId: PlayerId | null = null
+            let currentNickname: string | null = null
 
             return {
                 onOpen: (_event, ws) => {
@@ -56,14 +57,79 @@ export const registerWebSocketRoute = (
                         )
 
                         currentPlayerId = player.id
+                        currentNickname = player.nickname
+                        send(ws, {
+                            type: 'joined',
+                            playerId: player.id,
+                            nickname: player.nickname,
+
+                        })
+
+                        console.log(`${player.nickname} joined`)
+
+                        const matchmakingResult =
+                            roomService.addPlayerToMatchmaking(player)
+
+                        if (matchmakingResult.status === 'waiting') {
+                            send(ws, {
+                                type: 'waiting',
+                                playerId: player.id,
+                                message: 'Waiting for another player',
+                            })
+
+                            return
+                        }
+
+                        console.log(
+                            `Room ${matchmakingResult.room.id} started`,
+                        )
+
+                        return
+                    }
+                    if (message.type === 'queue') {
+                        if (!currentNickname) {
+                            send(ws, {
+                                type: 'error',
+                                message: 'Join first',
+                            })
+                            return
+                        }
+
+                        if (
+                            currentPlayerId &&
+                            roomService.findRoomByPlayerId(currentPlayerId)
+                        ) {
+                            send(ws, {
+                                type: 'error',
+                                message: 'Player is already in a match',
+                            })
+                            return
+                        }
+
+                        if (
+                            currentPlayerId &&
+                            roomService.isPlayerWaiting(currentPlayerId)
+                        ) {
+                            send(ws, {
+                                type: 'error',
+                                message: 'Player is already waiting',
+                            })
+                            return
+                        }
+
+                        const player = createPlayer(
+                            currentNickname,
+                            ws,
+                            config.playerSpawnPoints[0],
+                        )
+
+                        currentPlayerId = player.id
 
                         send(ws, {
                             type: 'joined',
                             playerId: player.id,
                             nickname: player.nickname,
                         })
-
-                        console.log(`${player.nickname} joined`)
 
                         const matchmakingResult =
                             roomService.addPlayerToMatchmaking(player)

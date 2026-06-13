@@ -34,6 +34,11 @@ const isInputMessage = (
         isBoolean(value.input.jump)
     )
 }
+const isQueueMessage = (
+    value: Record<string, unknown>,
+): value is Extract<ClientMessage, { type: 'queue' }> => {
+    return value.type === 'queue'
+}
 
 export const parseClientMessage = (
     rawData: unknown,
@@ -67,6 +72,11 @@ export const parseClientMessage = (
             },
         }
     }
-
+    if (isQueueMessage(parsedData)) {
+        return {
+            type: 'queue',
+        }
+    }
     return null
 }
+
