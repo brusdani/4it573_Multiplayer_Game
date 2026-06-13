@@ -23,17 +23,15 @@ export class GameScene extends Phaser.Scene {
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
 
     private wasd!: {
-        up: Phaser.Input.Keyboard.Key
-        down: Phaser.Input.Keyboard.Key
         left: Phaser.Input.Keyboard.Key
         right: Phaser.Input.Keyboard.Key
+        jump: Phaser.Input.Keyboard.Key
     }
 
     private lastInput = {
-        up: false,
-        down: false,
         left: false,
         right: false,
+        jump: false
     }
 
     constructor() {
@@ -50,10 +48,9 @@ export class GameScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys()
 
         this.wasd = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
             left: Phaser.Input.Keyboard.KeyCodes.A,
             right: Phaser.Input.Keyboard.KeyCodes.D,
+            jump: Phaser.Input.Keyboard.KeyCodes.W,
         }) as typeof this.wasd
 
         this.nickname =
@@ -74,6 +71,13 @@ export class GameScene extends Phaser.Scene {
             fontSize: '20px',
             color: '#ffffff',
         })
+        this.add.rectangle(
+            400,
+            580,
+            800,
+            40,
+            0x555555,
+        )
 
         this.itemObject = this.add.circle(0, 0, 10, 0xffd700)
         this.itemObject.setVisible(false)
@@ -122,10 +126,9 @@ export class GameScene extends Phaser.Scene {
         if (message.type === 'gameOver') {
             this.matchActive = false
             this.lastInput = {
-                up: false,
-                down: false,
                 left: false,
                 right: false,
+                jump: false
             }
             this.statusText
                 .setVisible(true)
@@ -192,17 +195,15 @@ export class GameScene extends Phaser.Scene {
             return
         }
         const input = {
-            up: this.wasd.up.isDown || Boolean(this.cursors.up?.isDown),
-            down: this.wasd.down.isDown || Boolean(this.cursors.down?.isDown),
             left: this.wasd.left.isDown || Boolean(this.cursors.left?.isDown),
             right: this.wasd.right.isDown || Boolean(this.cursors.right?.isDown),
+            jump: this.wasd.jump.isDown || Boolean(this.cursors.up?.isDown)
         }
 
         const hasChanged =
-            input.up !== this.lastInput.up ||
-            input.down !== this.lastInput.down ||
             input.left !== this.lastInput.left ||
-            input.right !== this.lastInput.right
+            input.right !== this.lastInput.right ||
+            input.jump !== this.lastInput.jump
 
         if (!hasChanged) {
             return

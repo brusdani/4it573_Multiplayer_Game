@@ -29,10 +29,9 @@ const isInputMessage = (
     }
 
     return (
-        isBoolean(value.input.up) &&
-        isBoolean(value.input.down) &&
         isBoolean(value.input.left) &&
-        isBoolean(value.input.right)
+        isBoolean(value.input.right) &&
+        isBoolean(value.input.jump)
     )
 }
 
@@ -62,10 +61,9 @@ export const parseClientMessage = (
         return {
             type: 'input',
             input: {
-                up: parsedData.input.up,
-                down: parsedData.input.down,
                 left: parsedData.input.left,
                 right: parsedData.input.right,
+                jump: parsedData.input.jump,
             },
         }
     }

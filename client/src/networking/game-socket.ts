@@ -1,8 +1,7 @@
 export type InputState = {
-    up: boolean
-    down: boolean
     left: boolean
     right: boolean
+    jump: boolean
 }
 
 export type PlayerState = {
@@ -11,6 +10,8 @@ export type PlayerState = {
     x: number
     y: number
     score: number
+    velocityY: number
+    isGrounded: boolean
 }
 
 export type ServerMessage =

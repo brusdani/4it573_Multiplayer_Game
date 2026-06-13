@@ -3,29 +3,34 @@
   "arenaHeight": 600,
   "playerSpeed": 8,
   "pickupDistance": 30,
-  "matchDurationMs": 10000,
+  "matchDurationMs": 60000,
+
+  "gravity": 2,
+  "jumpVelocity": -24,
+  "groundY": 560,
+
   "playerSpawnPoints": [
     {
       "x": 100,
-      "y": 300
+      "y": 560
     },
     {
       "x": 700,
-      "y": 300
+      "y": 560
     }
   ],
   "itemSpawnPoints": [
     {
       "x": 200,
-      "y": 150
+      "y": 560
     },
     {
       "x": 400,
-      "y": 300
+      "y": 560
     },
     {
       "x": 600,
-      "y": 450
+      "y": 560
     }
   ]
 }

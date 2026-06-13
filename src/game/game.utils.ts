@@ -12,10 +12,9 @@ import type {
 export const randomId = () => crypto.randomUUID()
 
 export const defaultInputState = (): InputState => ({
-    up: false,
-    down: false,
     left: false,
     right: false,
+    jump: false,
 })
 
 const randomArrayItem = <T>(items: T[]): T => {
@@ -43,5 +42,8 @@ export const createPlayer = (
     y: spawnPoint.y,
     score: 0,
     input: defaultInputState(),
+    velocityY: 0,
+    isGrounded: true,
+    wasJumpPressed: false,
     ws,
 })

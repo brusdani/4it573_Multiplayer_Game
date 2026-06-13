@@ -79,13 +79,6 @@ export const createRoomService = (
         const timeLeftMs = Math.max(0, room.durationMs - elapsed)
 
         for (const player of room.players) {
-            if (player.input.up) {
-                player.y -= config.playerSpeed
-            }
-
-            if (player.input.down) {
-                player.y += config.playerSpeed
-            }
 
             if (player.input.left) {
                 player.x -= config.playerSpeed
@@ -94,16 +87,36 @@ export const createRoomService = (
             if (player.input.right) {
                 player.x += config.playerSpeed
             }
+            const jumpStarted =
+                player.input.jump &&
+                !player.wasJumpPressed &&
+                player.isGrounded
+
+            if (jumpStarted) {
+                player.velocityY = config.jumpVelocity
+                player.isGrounded = false
+            }
+
+            player.wasJumpPressed = player.input.jump
+
+            if (!player.isGrounded) {
+                player.velocityY += config.gravity
+                player.y += player.velocityY
+            }
+
+            if (player.y >= config.groundY) {
+                player.y = config.groundY
+                player.velocityY = 0
+                player.isGrounded = true
+            }
+
 
             player.x = Math.max(
                 0,
                 Math.min(config.arenaWidth, player.x),
             )
 
-            player.y = Math.max(
-                0,
-                Math.min(config.arenaHeight, player.y),
-            )
+            player.y = Math.max(0, player.y)
 
             const dx = player.x - room.item.x
             const dy = player.y - room.item.y
@@ -125,6 +138,8 @@ export const createRoomService = (
                 x: player.x,
                 y: player.y,
                 score: player.score,
+                velocityY: player.velocityY,
+                isGrounded: player.isGrounded,
             })),
         })
 

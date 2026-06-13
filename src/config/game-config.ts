@@ -11,6 +11,9 @@ export type GameConfig = {
     playerSpeed: number
     pickupDistance: number
     matchDurationMs: number
+    gravity: number
+    jumpVelocity: number
+    groundY: number
     playerSpawnPoints: Position[]
     itemSpawnPoints: Position[]
 }
@@ -82,6 +85,21 @@ const validateGameConfig = (value: unknown): GameConfig => {
             'itemSpawnPoints must contain at least one valid position.',
         )
     }
+    if (!isPositiveNumber(config.gravity)) {
+        throw new Error('gravity must be a positive number.')
+    }
+
+    if (
+        typeof config.jumpVelocity !== 'number' ||
+        !Number.isFinite(config.jumpVelocity) ||
+        config.jumpVelocity >= 0
+    ) {
+        throw new Error('jumpVelocity must be a negative number.')
+    }
+
+    if (!isPositiveNumber(config.groundY)) {
+        throw new Error('groundY must be a positive number.')
+    }
 
     return {
         arenaWidth: config.arenaWidth,
@@ -89,6 +107,9 @@ const validateGameConfig = (value: unknown): GameConfig => {
         playerSpeed: config.playerSpeed,
         pickupDistance: config.pickupDistance,
         matchDurationMs: config.matchDurationMs,
+        gravity: config.gravity,
+        jumpVelocity: config.jumpVelocity,
+        groundY: config.groundY,
         playerSpawnPoints: config.playerSpawnPoints,
         itemSpawnPoints: config.itemSpawnPoints,
     }

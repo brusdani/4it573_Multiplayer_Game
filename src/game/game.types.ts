@@ -5,10 +5,9 @@ export type PlayerId = string
 export type RoomId = string
 
 export type InputState = {
-    up: boolean
-    down: boolean
     left: boolean
     right: boolean
+    jump: boolean
 }
 
 export type Player = {
@@ -18,6 +17,9 @@ export type Player = {
     y: number
     score: number
     input: InputState
+    velocityY: number
+    isGrounded: boolean
+    wasJumpPressed: boolean
     ws: WSContext
 }
 
