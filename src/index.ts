@@ -9,12 +9,19 @@ import {
     saveMatch,
 } from './database/match.repository.js'
 import { getLeaderboard } from './leaderboard/leaderboard.service.js'
+import { cors } from 'hono/cors'
 
 const config = await loadGameConfig()
 
 console.log('Game configuration loaded:', config)
 
 const app = new Hono()
+app.use(
+    '*',
+    cors({
+        origin: 'http://localhost:5173',
+    }),
+)
 const roomService = createRoomService(config, saveMatch)
 
 const { injectWebSocket } = registerWebSocketRoute(

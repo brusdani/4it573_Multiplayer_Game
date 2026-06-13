@@ -8,33 +8,76 @@
     />
     <title>Multiplayer Platformer</title>
 </head>
+
 <body>
-<main id="start-screen">
-    <form id="nickname-form">
-        <h1>Multiplayer Platformer</h1>
-
-        <label for="nickname">
-            Nickname
-        </label>
-
-        <input
-                id="nickname"
-                name="nickname"
-                type="text"
-                minlength="1"
-                maxlength="20"
-                placeholder="Enter your nickname"
-                autocomplete="nickname"
-                required
-        />
-
-        <button type="submit">
+<header class="main-header">
+    <nav class="main-navigation">
+        <a href="/" data-route="/">
             Play
-        </button>
-    </form>
+        </a>
+
+        <a href="/matches" data-route="/matches">
+            Match history
+        </a>
+
+        <a href="/leaderboard" data-route="/leaderboard">
+            Leaderboard
+        </a>
+    </nav>
+</header>
+
+<main>
+    <section id="home-page" class="page">
+        <form id="nickname-form">
+            <h1>Multiplayer Platformer</h1>
+
+            <label for="nickname">
+                Nickname
+            </label>
+
+            <input
+                    id="nickname"
+                    name="nickname"
+                    type="text"
+                    minlength="1"
+                    maxlength="20"
+                    placeholder="Enter your nickname"
+                    autocomplete="nickname"
+                    required
+            />
+
+            <button type="submit">
+                Play
+            </button>
+        </form>
+    </section>
+
+    <section id="matches-page" class="page" hidden>
+        <div class="content-panel">
+            <h1>Match history</h1>
+
+            <p id="matches-status">
+                Loading matches...
+            </p>
+
+            <div id="matches-list"></div>
+        </div>
+    </section>
+
+    <section id="leaderboard-page" class="page" hidden>
+        <div class="content-panel">
+            <h1>Leaderboard</h1>
+
+            <p id="leaderboard-status">
+                Loading leaderboard...
+            </p>
+
+            <div id="leaderboard-list"></div>
+        </div>
+    </section>
 </main>
 
-<div id="game-container"></div>
+<div id="game-container" hidden></div>
 
 <script type="module" src="/src/main.ts"></script>
 </body>

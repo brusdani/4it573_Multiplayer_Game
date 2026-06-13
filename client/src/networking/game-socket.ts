@@ -142,4 +142,8 @@ export class GameSocket {
             }),
         )
     }
+    disconnect(): void {
+        this.socket?.close()
+        this.socket = null
+    }
 }

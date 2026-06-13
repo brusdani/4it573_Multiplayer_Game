@@ -23,6 +23,7 @@ export class GameScene extends Phaser.Scene {
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
     private queueKey!: Phaser.Input.Keyboard.Key
+    private menuKey!: Phaser.Input.Keyboard.Key
 
     private wasd!: {
         left: Phaser.Input.Keyboard.Key
@@ -52,6 +53,9 @@ export class GameScene extends Phaser.Scene {
 
         this.queueKey = this.input.keyboard.addKey(
             Phaser.Input.Keyboard.KeyCodes.Q,
+        )
+        this.menuKey = this.input.keyboard.addKey(
+            Phaser.Input.Keyboard.KeyCodes.M,
         )
 
         this.wasd = this.input.keyboard.addKeys({
@@ -263,6 +267,16 @@ export class GameScene extends Phaser.Scene {
         this.scoreText.setText(scoreLine)
     }
     update(): void {
+        if (Phaser.Input.Keyboard.JustDown(this.menuKey)) {
+            this.gameSocket.disconnect()
+
+            window.dispatchEvent(
+                new CustomEvent('return-to-menu'),
+            )
+
+            return
+        }
+
         if (
             this.canQueueAgain &&
             Phaser.Input.Keyboard.JustDown(this.queueKey)

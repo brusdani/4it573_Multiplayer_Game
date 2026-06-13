@@ -11,8 +11,30 @@ body {
     background: #121212;
 }
 
-#start-screen {
-    min-height: 100vh;
+.main-header {
+    background: #1b1b1b;
+    border-bottom: 1px solid #333333;
+}
+
+.main-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 16px 24px;
+}
+
+.main-navigation a {
+    color: #dddddd;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.main-navigation a:hover {
+    color: #ffffff;
+}
+
+.page {
+    min-height: calc(100vh - 57px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -20,8 +42,9 @@ body {
     box-sizing: border-box;
 }
 
-#nickname-form {
-    width: min(420px, 100%);
+#nickname-form,
+.content-panel {
+    width: min(520px, 100%);
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -31,7 +54,8 @@ body {
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 
-#nickname-form h1 {
+#nickname-form h1,
+.content-panel h1 {
     margin: 0 0 8px;
     color: #ffffff;
 }
@@ -64,6 +88,54 @@ body {
 }
 
 #game-container {
+    min-height: 100vh;
     display: flex;
+    align-items: center;
     justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+#game-container canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+[hidden] {
+    display: none !important;
+}
+#matches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.match-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto;
+    gap: 6px 16px;
+    padding: 16px;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    background: #1b1b1b;
+}
+
+.match-card strong {
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.match-card span {
+    color: #d0d0d0;
+}
+
+.match-card time {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    color: #a8a8a8;
+    font-size: 14px;
+    white-space: nowrap;
 }
