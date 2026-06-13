@@ -5,6 +5,10 @@ import {
     fetchMatches,
     type Match,
 } from './api/matches'
+import {
+    fetchLeaderboard,
+    type LeaderboardEntry,
+} from './api/leaderboard'
 
 const homePage =
     document.querySelector<HTMLElement>('#home-page')
@@ -36,6 +40,12 @@ const matchesStatus =
 const matchesList =
     document.querySelector<HTMLElement>('#matches-list')
 
+const leaderboardStatus =
+    document.querySelector<HTMLElement>('#leaderboard-status')
+
+const leaderboardList =
+    document.querySelector<HTMLElement>('#leaderboard-list')
+
 let game: Phaser.Game | null = null
 
 if (
@@ -47,7 +57,9 @@ if (
     !nicknameForm ||
     !nicknameInput ||
     !matchesStatus ||
-    !matchesList
+    !matchesList ||
+    !leaderboardStatus ||
+    !leaderboardList
 ) {
     throw new Error('Required page elements were not found')
 }
@@ -92,6 +104,47 @@ const createMatchElement = (match: Match): HTMLElement => {
     return matchElement
 }
 
+const createLeaderboardElement = (
+    entry: LeaderboardEntry,
+    position: number,
+): HTMLElement => {
+    const entryElement = document.createElement('article')
+    entryElement.className = 'leaderboard-entry'
+
+    const positionElement = document.createElement('strong')
+    positionElement.className = 'leaderboard-position'
+    positionElement.textContent = `${position}.`
+
+    const nicknameElement = document.createElement('strong')
+    nicknameElement.className = 'leaderboard-nickname'
+    nicknameElement.textContent = entry.nickname
+
+    const statisticsElement = document.createElement('span')
+    statisticsElement.className = 'leaderboard-statistics'
+    statisticsElement.textContent =
+        `${entry.wins} W · ` +
+        `${entry.losses} L · ` +
+        `${entry.draws} D · ` +
+        `${entry.gamesPlayed} games`
+
+    const winRateElement = document.createElement('span')
+    winRateElement.className = 'leaderboard-win-rate'
+
+    const winRatePercentage = Math.round(entry.winRate * 100)
+
+    winRateElement.textContent =
+        `${winRatePercentage}% win rate`
+
+    entryElement.append(
+        positionElement,
+        nicknameElement,
+        statisticsElement,
+        winRateElement,
+    )
+
+    return entryElement
+}
+
 const loadMatches = async (): Promise<void> => {
     matchesStatus.hidden = false
     matchesStatus.textContent = 'Loading matches...'
@@ -101,7 +154,8 @@ const loadMatches = async (): Promise<void> => {
         const matches = await fetchMatches()
 
         if (matches.length === 0) {
-            matchesStatus.textContent = 'No matches have been played yet.'
+            matchesStatus.textContent =
+                'No matches have been played yet.'
             return
         }
 
@@ -110,6 +164,7 @@ const loadMatches = async (): Promise<void> => {
         const matchElements = matches
             .slice(0, 20)
             .map(createMatchElement)
+
         matchesList.append(...matchElements)
     } catch (error) {
         console.error('Failed to load matches:', error)
@@ -118,6 +173,38 @@ const loadMatches = async (): Promise<void> => {
             error instanceof Error
                 ? error.message
                 : 'Failed to load match history.'
+    }
+}
+
+const loadLeaderboard = async (): Promise<void> => {
+    leaderboardStatus.hidden = false
+    leaderboardStatus.textContent = 'Loading leaderboard...'
+    leaderboardList.replaceChildren()
+
+    try {
+        const leaderboard = await fetchLeaderboard()
+
+        if (leaderboard.length === 0) {
+            leaderboardStatus.textContent =
+                'No leaderboard entries are available yet.'
+            return
+        }
+
+        leaderboardStatus.hidden = true
+
+        const leaderboardElements = leaderboard.map(
+            (entry, index) =>
+                createLeaderboardElement(entry, index + 1),
+        )
+
+        leaderboardList.append(...leaderboardElements)
+    } catch (error) {
+        console.error('Failed to load leaderboard:', error)
+
+        leaderboardStatus.textContent =
+            error instanceof Error
+                ? error.message
+                : 'Failed to load leaderboard.'
     }
 }
 
@@ -134,6 +221,10 @@ const showRoute = (path: string): void => {
 
     if (route === '/matches') {
         void loadMatches()
+    }
+
+    if (route === '/leaderboard') {
+        void loadLeaderboard()
     }
 }
 

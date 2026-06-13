@@ -95,14 +95,17 @@ body {
     padding: 24px;
     box-sizing: border-box;
 }
+
 #game-container canvas {
     display: block;
     max-width: 100%;
     height: auto;
 }
+
 [hidden] {
     display: none !important;
 }
+
 #matches-list {
     display: flex;
     flex-direction: column;
@@ -138,4 +141,90 @@ body {
     color: #a8a8a8;
     font-size: 14px;
     white-space: nowrap;
+}
+
+#leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.leaderboard-entry {
+    display: grid;
+    grid-template-columns: 48px minmax(140px, 1fr) 2fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 4px 16px;
+    padding: 16px;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    background: #1b1b1b;
+}
+
+.leaderboard-position {
+    grid-row: 1 / 3;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.leaderboard-nickname {
+    grid-row: 1 / 3;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.leaderboard-statistics {
+    grid-column: 3;
+    grid-row: 1;
+    color: #cfcfcf;
+    text-align: right;
+}
+
+.leaderboard-win-rate {
+    grid-column: 3;
+    grid-row: 2;
+    color: #9f9f9f;
+    text-align: right;
+    font-size: 14px;
+}
+
+@media (max-width: 700px) {
+    .match-card {
+        grid-template-columns: 1fr;
+    }
+
+    .match-card time {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .leaderboard-entry {
+        grid-template-columns: 40px 1fr;
+        grid-template-rows: auto auto auto;
+    }
+
+    .leaderboard-position {
+        grid-column: 1;
+        grid-row: 1 / 3;
+    }
+
+    .leaderboard-nickname {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .leaderboard-statistics {
+        grid-column: 2;
+        grid-row: 2;
+        text-align: left;
+    }
+
+    .leaderboard-win-rate {
+        grid-column: 2;
+        grid-row: 3;
+        text-align: left;
+    }
 }
