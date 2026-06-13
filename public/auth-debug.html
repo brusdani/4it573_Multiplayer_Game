@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    >
+    <title>Auth debug</title>
+</head>
+<body>
+<h1>Authentication debug</h1>
+
+<label>
+    Username:
+    <input id="username" value="Daniel">
+</label>
+
+<br><br>
+
+<label>
+    Password:
+    <input
+            id="password"
+            type="password"
+            value="password123"
+    >
+</label>
+
+<br><br>
+
+<button id="register">Register</button>
+<button id="login">Login</button>
+<button id="me">Get current user</button>
+<button id="logout">Logout</button>
+
+<pre id="output"></pre>
+
+<script>
+    const output = document.querySelector('#output')
+    const usernameInput =
+        document.querySelector('#username')
+    const passwordInput =
+        document.querySelector('#password')
+
+    let token = null
+
+    const showResult = (value) => {
+        output.textContent = JSON.stringify(
+            value,
+            null,
+            2,
+        )
+    }
+
+    const sendCredentials = async (path) => {
+        const response = await fetch(path, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: usernameInput.value,
+                password: passwordInput.value,
+            }),
+        })
+
+        const data = await response.json()
+
+        if (data.token) {
+            token = data.token
+        }
+
+        showResult({
+            status: response.status,
+            data,
+        })
+    }
+
+    document
+        .querySelector('#register')
+        .addEventListener('click', async () => {
+            await sendCredentials('/auth/register')
+        })
+
+    document
+        .querySelector('#login')
+        .addEventListener('click', async () => {
+            await sendCredentials('/auth/login')
+        })
+
+    document
+        .querySelector('#me')
+        .addEventListener('click', async () => {
+            const response = await fetch('/auth/me', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            const data = await response.json()
+
+            showResult({
+                status: response.status,
+                data,
+            })
+        })
+
+    document
+        .querySelector('#logout')
+        .addEventListener('click', async () => {
+            const response = await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            const data = await response.json()
+
+            showResult({
+                status: response.status,
+                data,
+            })
+        })
+</script>
+</body>
+</html>

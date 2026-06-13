@@ -10,6 +10,7 @@ import {
 } from './database/match.repository.js'
 import { getLeaderboard } from './leaderboard/leaderboard.service.js'
 import { cors } from 'hono/cors'
+import { registerAuthRoutes } from './auth/auth.route.js'
 
 const config = await loadGameConfig()
 
@@ -22,6 +23,8 @@ app.use(
         origin: 'http://localhost:5173',
     }),
 )
+
+registerAuthRoutes(app)
 const roomService = createRoomService(config, saveMatch)
 
 const { injectWebSocket } = registerWebSocketRoute(
