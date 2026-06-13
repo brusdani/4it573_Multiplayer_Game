@@ -14,6 +14,8 @@ import { broadcast } from '../websocket/ws.utils.js'
 
 type SaveMatch = (match: SaveMatchInput) => Promise<void>
 
+const PLAYER_HALF_HEIGHT = 16
+
 export const createRoomService = (
     config: GameConfig,
     saveMatch: SaveMatch
@@ -98,10 +100,51 @@ export const createRoomService = (
             }
 
             player.wasJumpPressed = player.input.jump
+            const previousBottom =
+                player.y + PLAYER_HALF_HEIGHT
 
             if (!player.isGrounded) {
                 player.velocityY += config.gravity
                 player.y += player.velocityY
+            }
+            const currentBottom =
+                player.y + PLAYER_HALF_HEIGHT
+            let landedOnPlatform = false
+            if (player.velocityY >= 0) {
+                for (const platform of config.platforms) {
+                    const platformTop =
+                        platform.y - platform.height / 2
+
+                    const platformLeft =
+                        platform.x - platform.width / 2
+
+                    const platformRight =
+                        platform.x + platform.width / 2
+
+                    const isHorizontallyAbove =
+                        player.x >= platformLeft &&
+                        player.x <= platformRight
+
+                    const crossedPlatformTop =
+                        previousBottom <= platformTop &&
+                        currentBottom >= platformTop
+
+                    if (isHorizontallyAbove && crossedPlatformTop) {
+                        player.y = platformTop - PLAYER_HALF_HEIGHT
+                        player.velocityY = 0
+                        player.isGrounded = true
+                        landedOnPlatform = true
+                        break
+                    }
+                }
+            }
+
+            if (
+                player.isGrounded &&
+                player.y < config.groundY &&
+                !landedOnPlatform
+            ) {
+                player.isGrounded = false
             }
 
             if (player.y >= config.groundY) {
@@ -190,6 +233,8 @@ export const createRoomService = (
                 width: config.arenaWidth,
                 height: config.arenaHeight,
             },
+            platforms: config.platforms,
+            groundY: config.groundY,
         })
 
         room.intervalId = setInterval(() => {

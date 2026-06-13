@@ -4,6 +4,12 @@ export type Position = {
     x: number
     y: number
 }
+export type PlatformConfig = {
+    x: number
+    y: number
+    width: number
+    height: number
+}
 
 export type GameConfig = {
     arenaWidth: number
@@ -16,6 +22,7 @@ export type GameConfig = {
     groundY: number
     playerSpawnPoints: Position[]
     itemSpawnPoints: Position[]
+    platforms: PlatformConfig[]
 }
 
 const CONFIG_PATH = new URL('../../data/default-map.json', import.meta.url)
@@ -36,6 +43,22 @@ const isPosition = (value: unknown): value is Position => {
         Number.isFinite(position.x) &&
         typeof position.y === 'number' &&
         Number.isFinite(position.y)
+    )
+}
+const isPlatform = (value: unknown): value is PlatformConfig => {
+    if (typeof value !== 'object' || value === null) {
+        return false
+    }
+
+    const platform = value as Record<string, unknown>
+
+    return (
+        typeof platform.x === 'number' &&
+        Number.isFinite(platform.x) &&
+        typeof platform.y === 'number' &&
+        Number.isFinite(platform.y) &&
+        isPositiveNumber(platform.width) &&
+        isPositiveNumber(platform.height)
     )
 }
 
@@ -100,6 +123,12 @@ const validateGameConfig = (value: unknown): GameConfig => {
     if (!isPositiveNumber(config.groundY)) {
         throw new Error('groundY must be a positive number.')
     }
+    if (
+        !Array.isArray(config.platforms) ||
+        !config.platforms.every(isPlatform)
+    ) {
+        throw new Error('platforms must contain valid platform definitions.')
+    }
 
     return {
         arenaWidth: config.arenaWidth,
@@ -112,6 +141,7 @@ const validateGameConfig = (value: unknown): GameConfig => {
         groundY: config.groundY,
         playerSpawnPoints: config.playerSpawnPoints,
         itemSpawnPoints: config.itemSpawnPoints,
+        platforms: config.platforms,
     }
 }
 

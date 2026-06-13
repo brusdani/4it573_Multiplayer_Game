@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import {
-    GameSocket,
+    GameSocket, type PlatformState,
     type PlayerState,
     type ServerMessage,
 } from '../networking/game-socket'
@@ -15,6 +15,7 @@ export class GameScene extends Phaser.Scene {
 
     private playerObjects = new Map<string, Phaser.GameObjects.Rectangle>()
     private itemObject!: Phaser.GameObjects.Arc
+    private platformObjects: Phaser.GameObjects.Rectangle[] = []
 
     private nickname = 'Player'
     private localPlayerId: string | null = null
@@ -71,13 +72,7 @@ export class GameScene extends Phaser.Scene {
             fontSize: '20px',
             color: '#ffffff',
         })
-        this.add.rectangle(
-            400,
-            580,
-            800,
-            40,
-            0x555555,
-        )
+
 
         this.itemObject = this.add.circle(0, 0, 10, 0xffd700)
         this.itemObject.setVisible(false)
@@ -110,6 +105,12 @@ export class GameScene extends Phaser.Scene {
         if (message.type === 'start') {
             this.matchActive = true
             this.statusText.setText('Match started')
+            this.drawMap(
+                message.platforms,
+                message.groundY,
+                message.arena.width,
+                message.arena.height,
+                )
             return
         }
 
@@ -145,6 +146,43 @@ export class GameScene extends Phaser.Scene {
             this.statusText
                 .setVisible(true)
                 .setText(message.message)
+        }
+    }
+
+    private drawMap(
+        platforms: PlatformState[],
+        groundY: number,
+        arenaWidth: number,
+        arenaHeight: number,
+    ): void {
+        for (const platformObject of this.platformObjects) {
+            platformObject.destroy()
+        }
+
+        this.platformObjects = []
+
+        const groundHeight = arenaHeight - groundY
+
+        const ground = this.add.rectangle(
+            arenaWidth / 2,
+            groundY + groundHeight / 2,
+            arenaWidth,
+            groundHeight,
+            0x555555,
+        )
+
+        this.platformObjects.push(ground)
+
+        for (const platform of platforms) {
+            const platformObject = this.add.rectangle(
+                platform.x,
+                platform.y,
+                platform.width,
+                platform.height,
+                0x777777,
+            )
+
+            this.platformObjects.push(platformObject)
         }
     }
 

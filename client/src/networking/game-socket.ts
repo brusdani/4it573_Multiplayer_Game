@@ -14,6 +14,15 @@ export type PlayerState = {
     isGrounded: boolean
 }
 
+
+export type PlatformState = {
+    x: number
+    y: number
+    width: number
+    height: number
+}
+
+
 export type ServerMessage =
     | {
     type: 'connected'
@@ -41,6 +50,8 @@ export type ServerMessage =
         width: number
         height: number
     }
+    platforms: PlatformState[]
+    groundY: number
 }
     | {
     type: 'state'
