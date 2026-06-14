@@ -5,15 +5,24 @@ import type { GameConfig } from '../config/game-config.js'
 import type { PlayerId } from '../game/game.types.js'
 import { createPlayer } from '../game/game.utils.js'
 import type { RoomService } from '../game/room.service.js'
+import { getAuthenticatedUser } from '../auth/auth.service.js'
 import { send } from './ws.utils.js'
 import { parseClientMessage } from './ws.validation.js'
+
+type AuthenticatedUser = {
+    id: number
+    username: string
+}
 
 export const registerWebSocketRoute = (
     app: Hono,
     config: GameConfig,
     roomService: RoomService,
 ) => {
-    const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({
+    const {
+        injectWebSocket,
+        upgradeWebSocket,
+    } = createNodeWebSocket({
         app,
     })
 
@@ -21,24 +30,86 @@ export const registerWebSocketRoute = (
         '/ws',
         upgradeWebSocket(() => {
             let currentPlayerId: PlayerId | null = null
-            let currentNickname: string | null = null
+            let authenticatedUser: AuthenticatedUser | null =
+                null
 
             return {
                 onOpen: (_event, ws) => {
                     send(ws, {
                         type: 'connected',
-                        message: 'WebSocket connected. Send join message.',
+                        message:
+                            'WebSocket connected. Authentication required.',
                     })
                 },
 
-                onMessage: (event, ws) => {
-                    const message = parseClientMessage(event.data)
+                onMessage: async (event, ws) => {
+                    const message = parseClientMessage(
+                        event.data,
+                    )
 
                     if (!message) {
                         send(ws, {
                             type: 'error',
-                            message: 'Invalid WebSocket message',
+                            message:
+                                'Invalid WebSocket message',
                         })
+
+                        return
+                    }
+
+                    if (message.type === 'authenticate') {
+                        if (authenticatedUser) {
+                            send(ws, {
+                                type: 'error',
+                                message:
+                                    'WebSocket is already authenticated',
+                            })
+
+                            return
+                        }
+
+                        const user =
+                            await getAuthenticatedUser(
+                                message.token,
+                            )
+
+                        if (!user) {
+                            send(ws, {
+                                type: 'error',
+                                message:
+                                    'Authentication session is invalid or expired',
+                            })
+
+                            ws.close(
+                                1008,
+                                'Authentication failed',
+                            )
+
+                            return
+                        }
+
+                        authenticatedUser = user
+
+                        send(ws, {
+                            type: 'authenticated',
+                            userId: user.id,
+                            username: user.username,
+                        })
+
+                        console.log(
+                            `${user.username} authenticated through WebSocket`,
+                        )
+
+                        return
+                    }
+
+                    if (!authenticatedUser) {
+                        send(ws, {
+                            type: 'error',
+                            message:
+                                'Authenticate before sending game messages',
+                        })
+
                         return
                     }
 
@@ -46,35 +117,45 @@ export const registerWebSocketRoute = (
                         if (currentPlayerId) {
                             send(ws, {
                                 type: 'error',
-                                message: 'Player has already joined',
+                                message:
+                                    'Player has already joined',
                             })
+
                             return
                         }
+
                         const player = createPlayer(
-                            message.nickname,
+                            authenticatedUser.username,
                             ws,
                             config.playerSpawnPoints[0],
                         )
 
                         currentPlayerId = player.id
-                        currentNickname = player.nickname
+
                         send(ws, {
                             type: 'joined',
                             playerId: player.id,
                             nickname: player.nickname,
-
                         })
 
-                        console.log(`${player.nickname} joined`)
+                        console.log(
+                            `${player.nickname} joined`,
+                        )
 
                         const matchmakingResult =
-                            roomService.addPlayerToMatchmaking(player)
+                            roomService.addPlayerToMatchmaking(
+                                player,
+                            )
 
-                        if (matchmakingResult.status === 'waiting') {
+                        if (
+                            matchmakingResult.status ===
+                            'waiting'
+                        ) {
                             send(ws, {
                                 type: 'waiting',
                                 playerId: player.id,
-                                message: 'Waiting for another player',
+                                message:
+                                    'Waiting for another player',
                             })
 
                             return
@@ -86,39 +167,47 @@ export const registerWebSocketRoute = (
 
                         return
                     }
+
                     if (message.type === 'queue') {
-                        if (!currentNickname) {
+                        if (!currentPlayerId) {
                             send(ws, {
                                 type: 'error',
                                 message: 'Join first',
                             })
+
                             return
                         }
 
                         if (
-                            currentPlayerId &&
-                            roomService.findRoomByPlayerId(currentPlayerId)
+                            roomService.findRoomByPlayerId(
+                                currentPlayerId,
+                            )
                         ) {
                             send(ws, {
                                 type: 'error',
-                                message: 'Player is already in a match',
+                                message:
+                                    'Player is already in a match',
                             })
+
                             return
                         }
 
                         if (
-                            currentPlayerId &&
-                            roomService.isPlayerWaiting(currentPlayerId)
+                            roomService.isPlayerWaiting(
+                                currentPlayerId,
+                            )
                         ) {
                             send(ws, {
                                 type: 'error',
-                                message: 'Player is already waiting',
+                                message:
+                                    'Player is already waiting',
                             })
+
                             return
                         }
 
                         const player = createPlayer(
-                            currentNickname,
+                            authenticatedUser.username,
                             ws,
                             config.playerSpawnPoints[0],
                         )
@@ -132,13 +221,19 @@ export const registerWebSocketRoute = (
                         })
 
                         const matchmakingResult =
-                            roomService.addPlayerToMatchmaking(player)
+                            roomService.addPlayerToMatchmaking(
+                                player,
+                            )
 
-                        if (matchmakingResult.status === 'waiting') {
+                        if (
+                            matchmakingResult.status ===
+                            'waiting'
+                        ) {
                             send(ws, {
                                 type: 'waiting',
                                 playerId: player.id,
-                                message: 'Waiting for another player',
+                                message:
+                                    'Waiting for another player',
                             })
 
                             return
@@ -162,15 +257,20 @@ export const registerWebSocketRoute = (
                         }
 
                         const room =
-                            roomService.findRoomByPlayerId(currentPlayerId)
+                            roomService.findRoomByPlayerId(
+                                currentPlayerId,
+                            )
 
                         if (!room) {
                             send(ws, {
                                 type: 'error',
-                                message: 'Player is not currently in a match',
+                                message:
+                                    'Player is not currently in a match',
                             })
+
                             return
                         }
+
                         roomService.updatePlayerInput(
                             currentPlayerId,
                             room,

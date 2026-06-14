@@ -14,7 +14,6 @@ export type PlayerState = {
     isGrounded: boolean
 }
 
-
 export type PlatformState = {
     x: number
     y: number
@@ -22,13 +21,17 @@ export type PlatformState = {
     height: number
 }
 
-
 export type ServerMessage =
     | {
     type: 'connected'
     message: string
 }
-    |{
+    | {
+    type: 'authenticated'
+    userId: number
+    username: string
+}
+    | {
     type: 'joined'
     playerId: string
     nickname: string
@@ -76,50 +79,81 @@ export type ServerMessage =
     message: string
 }
 
-type MessageHandler = (message: ServerMessage) => void
+type MessageHandler = (
+    message: ServerMessage,
+) => void
 
 export class GameSocket {
     private socket: WebSocket | null = null
+
     private readonly handlers: MessageHandler[] = []
 
-    connect(): void {
-        this.socket = new WebSocket('ws://localhost:3000/ws')
+    connect(token: string): void {
+        this.socket = new WebSocket(
+            'ws://localhost:3000/ws',
+        )
 
-        this.socket.addEventListener('message', (event) => {
-            const message = JSON.parse(String(event.data)) as ServerMessage
-
-            for (const handler of this.handlers) {
-                handler(message)
-            }
+        this.socket.addEventListener('open', () => {
+            this.socket?.send(
+                JSON.stringify({
+                    type: 'authenticate',
+                    token,
+                }),
+            )
         })
+
+        this.socket.addEventListener(
+            'message',
+            (event) => {
+                const message = JSON.parse(
+                    String(event.data),
+                ) as ServerMessage
+
+                for (const handler of this.handlers) {
+                    handler(message)
+                }
+            },
+        )
 
         this.socket.addEventListener('close', () => {
             console.log('WebSocket disconnected')
         })
 
-        this.socket.addEventListener('error', (error) => {
-            console.error('WebSocket error:', error)
-        })
+        this.socket.addEventListener(
+            'error',
+            (error) => {
+                console.error(
+                    'WebSocket error:',
+                    error,
+                )
+            },
+        )
     }
 
     onMessage(handler: MessageHandler): void {
         this.handlers.push(handler)
     }
 
-    join(nickname: string): void {
-        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+    join(): void {
+        if (
+            !this.socket ||
+            this.socket.readyState !== WebSocket.OPEN
+        ) {
             return
         }
 
         this.socket.send(
             JSON.stringify({
                 type: 'join',
-                nickname,
             }),
         )
     }
+
     queue(): void {
-        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+        if (
+            !this.socket ||
+            this.socket.readyState !== WebSocket.OPEN
+        ) {
             return
         }
 
@@ -131,7 +165,10 @@ export class GameSocket {
     }
 
     sendInput(input: InputState): void {
-        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+        if (
+            !this.socket ||
+            this.socket.readyState !== WebSocket.OPEN
+        ) {
             return
         }
 
@@ -142,6 +179,7 @@ export class GameSocket {
             }),
         )
     }
+
     disconnect(): void {
         this.socket?.close()
         this.socket = null

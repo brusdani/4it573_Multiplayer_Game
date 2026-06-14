@@ -17,7 +17,7 @@ export class GameScene extends Phaser.Scene {
     private itemObject!: Phaser.GameObjects.Arc
     private platformObjects: Phaser.GameObjects.Rectangle[] = []
 
-    private readonly nickname: string
+    private readonly authToken: string
     private localPlayerId: string | null = null
     private matchActive = false
 
@@ -38,9 +38,9 @@ export class GameScene extends Phaser.Scene {
     }
     private canQueueAgain = false
 
-    constructor(nickname: string) {
+    constructor(authToken: string) {
         super('GameScene')
-        this.nickname = nickname
+        this.authToken = authToken
     }
 
     create(): void {
@@ -103,13 +103,22 @@ export class GameScene extends Phaser.Scene {
             this.handleServerMessage(message)
         })
 
-        this.gameSocket.connect()
+        this.gameSocket.connect(this.authToken)
     }
 
     private handleServerMessage(message: ServerMessage): void {
         if (message.type === 'connected') {
-            this.statusText.setText('Connected to server')
-            this.gameSocket.join(this.nickname)
+            this.statusText.setText(
+                'Connected. Authenticating...',
+            )
+            return
+        }
+        if (message.type === 'authenticated') {
+            this.statusText.setText(
+                `Authenticated as ${message.username}`,
+            )
+
+            this.gameSocket.join()
             return
         }
         if (message.type === 'joined') {

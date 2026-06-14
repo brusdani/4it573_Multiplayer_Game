@@ -424,7 +424,7 @@ const performLogout = async (): Promise<void> => {
 }
 
 const startGame = (): void => {
-    if (!authenticatedUser || game) {
+    if (!authenticatedUser || !authToken || game) {
         return
     }
 
@@ -443,7 +443,7 @@ const startGame = (): void => {
         parent: 'game-container',
         scene: [
             new GameScene(
-                authenticatedUser.username,
+                authToken,
             ),
         ],
     }

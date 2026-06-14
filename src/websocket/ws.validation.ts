@@ -10,21 +10,33 @@ const isBoolean = (value: unknown): value is boolean => {
     return typeof value === 'boolean'
 }
 
+const isAuthenticateMessage = (
+    value: Record<string, unknown>,
+): value is Extract<
+    ClientMessage,
+    { type: 'authenticate' }
+> => {
+    return (
+        value.type === 'authenticate' &&
+        typeof value.token === 'string' &&
+        value.token.length > 0 &&
+        value.token.length <= 256
+    )
+}
+
 const isJoinMessage = (
     value: Record<string, unknown>,
 ): value is Extract<ClientMessage, { type: 'join' }> => {
-    return (
-        value.type === 'join' &&
-        typeof value.nickname === 'string' &&
-        value.nickname.trim().length > 0 &&
-        value.nickname.trim().length <= 20
-    )
+    return value.type === 'join'
 }
 
 const isInputMessage = (
     value: Record<string, unknown>,
 ): value is Extract<ClientMessage, { type: 'input' }> => {
-    if (value.type !== 'input' || !isObject(value.input)) {
+    if (
+        value.type !== 'input' ||
+        !isObject(value.input)
+    ) {
         return false
     }
 
@@ -34,6 +46,7 @@ const isInputMessage = (
         isBoolean(value.input.jump)
     )
 }
+
 const isQueueMessage = (
     value: Record<string, unknown>,
 ): value is Extract<ClientMessage, { type: 'queue' }> => {
@@ -55,10 +68,16 @@ export const parseClientMessage = (
         return null
     }
 
+    if (isAuthenticateMessage(parsedData)) {
+        return {
+            type: 'authenticate',
+            token: parsedData.token,
+        }
+    }
+
     if (isJoinMessage(parsedData)) {
         return {
             type: 'join',
-            nickname: parsedData.nickname.trim(),
         }
     }
 
@@ -72,11 +91,12 @@ export const parseClientMessage = (
             },
         }
     }
+
     if (isQueueMessage(parsedData)) {
         return {
             type: 'queue',
         }
     }
+
     return null
 }
-

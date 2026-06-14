@@ -1,43 +1,53 @@
 import test from 'ava'
-import { parseClientMessage } from '../dist/websocket/ws.validation.js'
+import {
+    parseClientMessage,
+} from '../dist/websocket/ws.validation.js'
+
+test('parses a valid authentication message', (t) => {
+    const result = parseClientMessage(
+        JSON.stringify({
+            type: 'authenticate',
+            token: 'valid-session-token',
+        }),
+    )
+
+    t.deepEqual(result, {
+        type: 'authenticate',
+        token: 'valid-session-token',
+    })
+})
+
+test('rejects an empty authentication token', (t) => {
+    const result = parseClientMessage(
+        JSON.stringify({
+            type: 'authenticate',
+            token: '',
+        }),
+    )
+
+    t.is(result, null)
+})
+
+test('rejects an authentication message without a token', (t) => {
+    const result = parseClientMessage(
+        JSON.stringify({
+            type: 'authenticate',
+        }),
+    )
+
+    t.is(result, null)
+})
 
 test('parses a valid join message', (t) => {
     const result = parseClientMessage(
         JSON.stringify({
             type: 'join',
-            nickname: 'Daniel',
         }),
     )
 
     t.deepEqual(result, {
         type: 'join',
-        nickname: 'Daniel',
     })
-})
-
-test('trims nickname in join message', (t) => {
-    const result = parseClientMessage(
-        JSON.stringify({
-            type: 'join',
-            nickname: '  Daniel  ',
-        }),
-    )
-
-    t.deepEqual(result, {
-        type: 'join',
-        nickname: 'Daniel',
-    })
-})
-
-test('rejects an empty nickname', (t) => {
-    const result = parseClientMessage(
-        JSON.stringify({
-            type: 'join',
-            nickname: '   ',
-        }),
-    )
-
-    t.is(result, null)
 })
 
 test('parses a valid input message', (t) => {
@@ -90,7 +100,9 @@ test('parses a queue message', (t) => {
 })
 
 test('rejects malformed JSON', (t) => {
-    const result = parseClientMessage('{invalid json')
+    const result = parseClientMessage(
+        '{invalid json',
+    )
 
     t.is(result, null)
 })
