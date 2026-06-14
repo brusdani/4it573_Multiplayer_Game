@@ -12,6 +12,7 @@ export type InputState = {
 
 export type Player = {
     id: PlayerId
+    userId: number
     nickname: string
     x: number
     y: number

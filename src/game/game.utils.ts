@@ -34,7 +34,9 @@ export const randomItem = (
         )
         : config.itemSpawnPoints
 
-    const spawnPoint = randomArrayItem(availableSpawnPoints)
+    const spawnPoint = randomArrayItem(
+        availableSpawnPoints,
+    )
 
     return {
         x: spawnPoint.x,
@@ -43,11 +45,13 @@ export const randomItem = (
 }
 
 export const createPlayer = (
+    userId: number,
     nickname: string,
     ws: WSContext,
     spawnPoint: Position,
 ): Player => ({
     id: randomId(),
+    userId,
     nickname,
     x: spawnPoint.x,
     y: spawnPoint.y,

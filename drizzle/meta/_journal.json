@@ -15,6 +15,13 @@
       "when": 1781382604838,
       "tag": "0001_magenta_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781453101272,
+      "tag": "0002_clever_hammerhead",
+      "breakpoints": true
     }
   ]
 }

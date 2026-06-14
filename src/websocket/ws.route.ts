@@ -125,6 +125,7 @@ export const registerWebSocketRoute = (
                         }
 
                         const player = createPlayer(
+                            authenticatedUser.id,
                             authenticatedUser.username,
                             ws,
                             config.playerSpawnPoints[0],
@@ -207,6 +208,7 @@ export const registerWebSocketRoute = (
                         }
 
                         const player = createPlayer(
+                            authenticatedUser.id,
                             authenticatedUser.username,
                             ws,
                             config.playerSpawnPoints[0],

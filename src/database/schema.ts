@@ -53,6 +53,21 @@ export const matchesTable = sqliteTable('matches', {
         autoIncrement: true,
     }),
 
+    player1UserId: integer('player1_user_id')
+        .references(() => usersTable.id, {
+            onDelete: 'set null',
+        }),
+
+    player2UserId: integer('player2_user_id')
+        .references(() => usersTable.id, {
+            onDelete: 'set null',
+        }),
+
+    winnerUserId: integer('winner_user_id')
+        .references(() => usersTable.id, {
+            onDelete: 'set null',
+        }),
+
     player1Nickname: text('player1_nickname').notNull(),
     player2Nickname: text('player2_nickname').notNull(),
 

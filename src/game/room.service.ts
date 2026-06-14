@@ -48,19 +48,26 @@ export const createRoomService = (
         const [player1, player2] = room.players
 
         let winnerId: string | null = null
+        let winnerUserId: number | null = null
         let winnerNickname: string | null = null
 
         if (player1.score > player2.score) {
             winnerId = player1.id
+            winnerUserId = player1.userId
             winnerNickname = player1.nickname
         }
 
         if (player2.score > player1.score) {
             winnerId = player2.id
+            winnerUserId = player2.userId
             winnerNickname = player2.nickname
         }
 
         await saveMatch({
+            player1UserId: player1.userId,
+            player2UserId: player2.userId,
+            winnerUserId,
+
             player1Nickname: player1.nickname,
             player2Nickname: player2.nickname,
             player1Score: player1.score,
