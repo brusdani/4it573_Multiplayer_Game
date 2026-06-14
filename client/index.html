@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -15,6 +16,7 @@
         <a href="/" data-route="/">
             Play
         </a>
+
         <a href="/matches" data-route="/matches">
             Match history
         </a>
@@ -45,6 +47,7 @@
     <section id="home-page" class="page">
         <div class="content-panel">
             <h1>Multiplayer Platformer</h1>
+
             <div id="guest-panel">
                 <p>
                     You must be logged in to play.
@@ -191,6 +194,15 @@
             </p>
 
             <div id="leaderboard-list"></div>
+
+            <section
+                    id="current-player-section"
+                    hidden
+            >
+                <h2>Your position</h2>
+
+                <div id="current-player-position"></div>
+            </section>
         </div>
     </section>
 

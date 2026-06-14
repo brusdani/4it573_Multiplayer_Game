@@ -1,21 +1,44 @@
 import type { LeaderboardEntry } from './leaderboard.types.js'
 import { getMatches } from '../database/match.repository.js'
 
-type MutableLeaderboardEntry = Omit<LeaderboardEntry, 'winRate'>
+type MutableLeaderboardEntry = Omit<
+    LeaderboardEntry,
+    'winRate'
+>
 
-type Match = Awaited<ReturnType<typeof getMatches>>[number]
+type Match = Awaited<
+    ReturnType<typeof getMatches>
+>[number]
+
+const createPlayerKey = (
+    userId: number | null | undefined,
+    nickname: string,
+): string => {
+    if (userId !== null && userId !== undefined) {
+        return `user:${userId}`
+    }
+
+    return `nickname:${nickname}`
+}
 
 const getOrCreatePlayer = (
     players: Map<string, MutableLeaderboardEntry>,
+    userId: number | null | undefined,
     nickname: string,
 ): MutableLeaderboardEntry => {
-    const existingPlayer = players.get(nickname)
+    const playerKey = createPlayerKey(
+        userId,
+        nickname,
+    )
+
+    const existingPlayer = players.get(playerKey)
 
     if (existingPlayer) {
         return existingPlayer
     }
 
     const newPlayer: MutableLeaderboardEntry = {
+        userId: userId ?? null,
         nickname,
         gamesPlayed: 0,
         wins: 0,
@@ -24,7 +47,7 @@ const getOrCreatePlayer = (
         totalScore: 0,
     }
 
-    players.set(nickname, newPlayer)
+    players.set(playerKey, newPlayer)
 
     return newPlayer
 }
@@ -32,16 +55,19 @@ const getOrCreatePlayer = (
 export const buildLeaderboard = (
     matches: Match[],
 ): LeaderboardEntry[] => {
-    const players = new Map<string, MutableLeaderboardEntry>()
+    const players =
+        new Map<string, MutableLeaderboardEntry>()
 
     for (const match of matches) {
         const player1 = getOrCreatePlayer(
             players,
+            match.player1UserId,
             match.player1Nickname,
         )
 
         const player2 = getOrCreatePlayer(
             players,
+            match.player2UserId,
             match.player2Nickname,
         )
 
@@ -51,13 +77,24 @@ export const buildLeaderboard = (
         player1.totalScore += match.player1Score
         player2.totalScore += match.player2Score
 
-        if (match.winnerNickname === null) {
+        const isDraw =
+            match.winnerUserId === null &&
+            match.winnerNickname === null
+
+        if (isDraw) {
             player1.draws += 1
             player2.draws += 1
             continue
         }
 
-        if (match.winnerNickname === match.player1Nickname) {
+        const player1Won =
+            match.winnerUserId !== null
+                ? match.winnerUserId ===
+                  match.player1UserId
+                : match.winnerNickname ===
+                  match.player1Nickname
+
+        if (player1Won) {
             player1.wins += 1
             player2.losses += 1
             continue
@@ -73,15 +110,22 @@ export const buildLeaderboard = (
             winRate:
                 player.gamesPlayed === 0
                     ? 0
-                    : player.wins / player.gamesPlayed,
+                    : player.wins /
+                      player.gamesPlayed,
         }))
         .sort((playerA, playerB) => {
             if (playerB.wins !== playerA.wins) {
                 return playerB.wins - playerA.wins
             }
 
-            if (playerB.totalScore !== playerA.totalScore) {
-                return playerB.totalScore - playerA.totalScore
+            if (
+                playerB.totalScore !==
+                playerA.totalScore
+            ) {
+                return (
+                    playerB.totalScore -
+                    playerA.totalScore
+                )
             }
 
             return playerA.nickname.localeCompare(

@@ -18,6 +18,7 @@ import {
 } from './api/auth'
 
 const AUTH_TOKEN_KEY = 'authToken'
+const LEADERBOARD_LIMIT = 10
 
 const homePage =
     document.querySelector<HTMLElement>('#home-page')
@@ -118,6 +119,16 @@ const leaderboardList =
         '#leaderboard-list',
     )
 
+const currentPlayerSection =
+    document.querySelector<HTMLElement>(
+        '#current-player-section',
+    )
+
+const currentPlayerPosition =
+    document.querySelector<HTMLElement>(
+        '#current-player-position',
+    )
+
 let game: Phaser.Game | null = null
 
 let authenticatedUser: AuthUser | null = null
@@ -151,7 +162,9 @@ if (
     !matchesStatus ||
     !matchesList ||
     !leaderboardStatus ||
-    !leaderboardList
+    !leaderboardList ||
+    !currentPlayerSection ||
+    !currentPlayerPosition
 ) {
     throw new Error('Required page elements were not found')
 }
@@ -206,6 +219,9 @@ const clearAuthentication = (): void => {
 
     sessionStorage.removeItem(AUTH_TOKEN_KEY)
 
+    currentPlayerSection.hidden = true
+    currentPlayerPosition.replaceChildren()
+
     updateAuthenticationDisplay()
 }
 
@@ -248,11 +264,18 @@ const createMatchElement = (
 const createLeaderboardElement = (
     entry: LeaderboardEntry,
     position: number,
+    isCurrentPlayer = false,
 ): HTMLElement => {
     const entryElement =
         document.createElement('article')
 
     entryElement.className = 'leaderboard-entry'
+
+    if (isCurrentPlayer) {
+        entryElement.classList.add(
+            'current-player-entry',
+        )
+    }
 
     const positionElement =
         document.createElement('strong')
@@ -345,6 +368,8 @@ const loadLeaderboard = async (): Promise<void> => {
         'Loading leaderboard...'
 
     leaderboardList.replaceChildren()
+    currentPlayerPosition.replaceChildren()
+    currentPlayerSection.hidden = true
 
     try {
         const leaderboard =
@@ -359,18 +384,53 @@ const loadLeaderboard = async (): Promise<void> => {
 
         leaderboardStatus.hidden = true
 
-        const leaderboardElements =
-            leaderboard.map(
-                (entry, index) =>
-                    createLeaderboardElement(
-                        entry,
-                        index + 1,
-                    ),
+        const topPlayers = leaderboard.slice(
+            0,
+            LEADERBOARD_LIMIT,
+        )
+
+        const topPlayerElements = topPlayers.map(
+            (entry, index) =>
+                createLeaderboardElement(
+                    entry,
+                    index + 1,
+                    entry.userId ===
+                        authenticatedUser?.id,
+                ),
+        )
+
+        leaderboardList.append(...topPlayerElements)
+
+        if (!authenticatedUser) {
+            return
+        }
+
+        const currentPlayerIndex =
+            leaderboard.findIndex(
+                (entry) =>
+                    entry.userId ===
+                    authenticatedUser?.id,
             )
 
-        leaderboardList.append(
-            ...leaderboardElements,
+        if (currentPlayerIndex === -1) {
+            return
+        }
+
+        const currentPlayer =
+            leaderboard[currentPlayerIndex]
+
+        const currentPlayerElement =
+            createLeaderboardElement(
+                currentPlayer,
+                currentPlayerIndex + 1,
+                true,
+            )
+
+        currentPlayerPosition.append(
+            currentPlayerElement,
         )
+
+        currentPlayerSection.hidden = false
     } catch (error) {
         console.error(
             'Failed to load leaderboard:',
@@ -442,9 +502,7 @@ const startGame = (): void => {
         backgroundColor: '#222222',
         parent: 'game-container',
         scene: [
-            new GameScene(
-                authToken,
-            ),
+            new GameScene(authToken),
         ],
     }
 

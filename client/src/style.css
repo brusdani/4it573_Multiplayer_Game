@@ -56,6 +56,10 @@ body {
     box-sizing: border-box;
 }
 
+#leaderboard-page .content-panel {
+    width: min(760px, 100%);
+}
+
 #login-form h1,
 #register-form h1,
 .content-panel h1 {
@@ -230,31 +234,40 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 60vh;
+    max-height: 52vh;
     overflow-y: auto;
     padding-right: 8px;
 }
 
 .leaderboard-entry {
     display: grid;
-    grid-template-columns: 48px minmax(140px, 1fr) 2fr;
+    grid-template-columns:
+        48px
+        minmax(130px, 1fr)
+        minmax(300px, auto);
     grid-template-rows: auto auto;
     align-items: center;
     gap: 4px 16px;
-    padding: 16px;
+    padding: 16px 20px;
     border: 1px solid #3a3a3a;
     border-radius: 8px;
     background: #1b1b1b;
 }
 
 .leaderboard-position {
+    grid-column: 1;
     grid-row: 1 / 3;
     font-size: 18px;
     color: #ffffff;
 }
 
 .leaderboard-nickname {
+    grid-column: 2;
     grid-row: 1 / 3;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 18px;
     color: #ffffff;
 }
@@ -264,6 +277,7 @@ body {
     grid-row: 1;
     color: #cfcfcf;
     text-align: right;
+    white-space: nowrap;
 }
 
 .leaderboard-win-rate {
@@ -272,6 +286,24 @@ body {
     color: #9f9f9f;
     text-align: right;
     font-size: 14px;
+    white-space: nowrap;
+}
+
+#current-player-section {
+    margin-top: 8px;
+    padding-top: 20px;
+    border-top: 1px solid #3a3a3a;
+}
+
+#current-player-section h2 {
+    margin: 0 0 16px;
+    color: #ffffff;
+}
+
+.current-player-entry {
+    border-color: #356fd6;
+    background: #1d2b45;
+    box-shadow: 0 0 0 1px rgba(53, 111, 214, 0.25);
 }
 
 @media (max-width: 700px) {
@@ -301,13 +333,14 @@ body {
     }
 
     .leaderboard-entry {
-        grid-template-columns: 40px 1fr;
+        grid-template-columns: 40px minmax(0, 1fr);
         grid-template-rows: auto auto auto;
+        padding: 14px;
     }
 
     .leaderboard-position {
         grid-column: 1;
-        grid-row: 1 / 3;
+        grid-row: 1 / 4;
     }
 
     .leaderboard-nickname {
@@ -319,6 +352,7 @@ body {
         grid-column: 2;
         grid-row: 2;
         text-align: left;
+        white-space: normal;
     }
 
     .leaderboard-win-rate {
