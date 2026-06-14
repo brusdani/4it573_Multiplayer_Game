@@ -9,9 +9,24 @@ import {
     fetchLeaderboard,
     type LeaderboardEntry,
 } from './api/leaderboard'
+import {
+    getCurrentUser,
+    login,
+    logout,
+    register,
+    type AuthUser,
+} from './api/auth'
+
+const AUTH_TOKEN_KEY = 'authToken'
 
 const homePage =
     document.querySelector<HTMLElement>('#home-page')
+
+const loginPage =
+    document.querySelector<HTMLElement>('#login-page')
+
+const registerPage =
+    document.querySelector<HTMLElement>('#register-page')
 
 const matchesPage =
     document.querySelector<HTMLElement>('#matches-page')
@@ -25,14 +40,67 @@ const mainHeader =
 const gameContainer =
     document.querySelector<HTMLElement>('#game-container')
 
-const nicknameForm =
-    document.querySelector<HTMLFormElement>('#nickname-form')
+const guestPanel =
+    document.querySelector<HTMLElement>('#guest-panel')
 
-const nicknameInput =
-    document.querySelector<HTMLInputElement>('#nickname')
+const playerPanel =
+    document.querySelector<HTMLElement>('#player-panel')
+
+const currentUsername =
+    document.querySelector<HTMLElement>('#current-username')
+
+const playButton =
+    document.querySelector<HTMLButtonElement>('#play-button')
+
+const logoutButton =
+    document.querySelector<HTMLButtonElement>('#logout-button')
+
+const loginForm =
+    document.querySelector<HTMLFormElement>('#login-form')
+
+const loginUsernameInput =
+    document.querySelector<HTMLInputElement>(
+        '#login-username',
+    )
+
+const loginPasswordInput =
+    document.querySelector<HTMLInputElement>(
+        '#login-password',
+    )
+
+const loginStatus =
+    document.querySelector<HTMLElement>('#login-status')
+
+const registerForm =
+    document.querySelector<HTMLFormElement>('#register-form')
+
+const registerUsernameInput =
+    document.querySelector<HTMLInputElement>(
+        '#register-username',
+    )
+
+const registerPasswordInput =
+    document.querySelector<HTMLInputElement>(
+        '#register-password',
+    )
+
+const registerStatus =
+    document.querySelector<HTMLElement>('#register-status')
+
+const registerNavigationLink =
+    document.querySelector<HTMLAnchorElement>(
+        '#register-navigation-link',
+    )
+
+const authNavigationLink =
+    document.querySelector<HTMLAnchorElement>(
+        '#auth-navigation-link',
+    )
 
 const navigationLinks =
-    document.querySelectorAll<HTMLAnchorElement>('[data-route]')
+    document.querySelectorAll<HTMLAnchorElement>(
+        '[data-route]',
+    )
 
 const matchesStatus =
     document.querySelector<HTMLElement>('#matches-status')
@@ -41,21 +109,45 @@ const matchesList =
     document.querySelector<HTMLElement>('#matches-list')
 
 const leaderboardStatus =
-    document.querySelector<HTMLElement>('#leaderboard-status')
+    document.querySelector<HTMLElement>(
+        '#leaderboard-status',
+    )
 
 const leaderboardList =
-    document.querySelector<HTMLElement>('#leaderboard-list')
+    document.querySelector<HTMLElement>(
+        '#leaderboard-list',
+    )
 
 let game: Phaser.Game | null = null
 
+let authenticatedUser: AuthUser | null = null
+
+let authToken: string | null =
+    localStorage.getItem(AUTH_TOKEN_KEY)
+
 if (
     !homePage ||
+    !loginPage ||
+    !registerPage ||
     !matchesPage ||
     !leaderboardPage ||
     !mainHeader ||
     !gameContainer ||
-    !nicknameForm ||
-    !nicknameInput ||
+    !guestPanel ||
+    !playerPanel ||
+    !currentUsername ||
+    !playButton ||
+    !logoutButton ||
+    !loginForm ||
+    !loginUsernameInput ||
+    !loginPasswordInput ||
+    !loginStatus ||
+    !registerForm ||
+    !registerUsernameInput ||
+    !registerPasswordInput ||
+    !registerStatus ||
+    !registerNavigationLink ||
+    !authNavigationLink ||
     !matchesStatus ||
     !matchesList ||
     !leaderboardStatus ||
@@ -66,6 +158,8 @@ if (
 
 const pages = {
     '/': homePage,
+    '/login': loginPage,
+    '/register': registerPage,
     '/matches': matchesPage,
     '/leaderboard': leaderboardPage,
 } as const
@@ -76,21 +170,68 @@ const isRoute = (path: string): path is Route => {
     return path in pages
 }
 
-const createMatchElement = (match: Match): HTMLElement => {
+const updateAuthenticationDisplay = (): void => {
+    const isAuthenticated = authenticatedUser !== null
+
+    guestPanel.hidden = isAuthenticated
+    playerPanel.hidden = !isAuthenticated
+
+    currentUsername.textContent =
+        authenticatedUser?.username ?? ''
+
+    registerNavigationLink.hidden = isAuthenticated
+
+    authNavigationLink.textContent =
+        isAuthenticated ? 'Logout' : 'Login'
+
+    authNavigationLink.href =
+        isAuthenticated ? '/' : '/login'
+}
+
+const storeAuthentication = (
+    token: string,
+    user: AuthUser,
+): void => {
+    authToken = token
+    authenticatedUser = user
+
+    localStorage.setItem(AUTH_TOKEN_KEY, token)
+
+    updateAuthenticationDisplay()
+}
+
+const clearAuthentication = (): void => {
+    authToken = null
+    authenticatedUser = null
+
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+
+    updateAuthenticationDisplay()
+}
+
+const createMatchElement = (
+    match: Match,
+): HTMLElement => {
     const matchElement = document.createElement('article')
     matchElement.className = 'match-card'
 
-    const resultElement = document.createElement('strong')
+    const resultElement =
+        document.createElement('strong')
+
     resultElement.textContent =
         `${match.player1Nickname} ${match.player1Score}` +
         ` : ${match.player2Score} ${match.player2Nickname}`
 
-    const winnerElement = document.createElement('span')
+    const winnerElement =
+        document.createElement('span')
+
     winnerElement.textContent = match.winnerNickname
         ? `Winner: ${match.winnerNickname}`
         : 'Draw'
 
-    const playedAtElement = document.createElement('time')
+    const playedAtElement =
+        document.createElement('time')
+
     playedAtElement.dateTime = match.playedAt
     playedAtElement.textContent =
         new Date(match.playedAt).toLocaleString()
@@ -108,29 +249,47 @@ const createLeaderboardElement = (
     entry: LeaderboardEntry,
     position: number,
 ): HTMLElement => {
-    const entryElement = document.createElement('article')
+    const entryElement =
+        document.createElement('article')
+
     entryElement.className = 'leaderboard-entry'
 
-    const positionElement = document.createElement('strong')
-    positionElement.className = 'leaderboard-position'
+    const positionElement =
+        document.createElement('strong')
+
+    positionElement.className =
+        'leaderboard-position'
+
     positionElement.textContent = `${position}.`
 
-    const nicknameElement = document.createElement('strong')
-    nicknameElement.className = 'leaderboard-nickname'
+    const nicknameElement =
+        document.createElement('strong')
+
+    nicknameElement.className =
+        'leaderboard-nickname'
+
     nicknameElement.textContent = entry.nickname
 
-    const statisticsElement = document.createElement('span')
-    statisticsElement.className = 'leaderboard-statistics'
+    const statisticsElement =
+        document.createElement('span')
+
+    statisticsElement.className =
+        'leaderboard-statistics'
+
     statisticsElement.textContent =
         `${entry.wins} W · ` +
         `${entry.losses} L · ` +
         `${entry.draws} D · ` +
         `${entry.gamesPlayed} games`
 
-    const winRateElement = document.createElement('span')
-    winRateElement.className = 'leaderboard-win-rate'
+    const winRateElement =
+        document.createElement('span')
 
-    const winRatePercentage = Math.round(entry.winRate * 100)
+    winRateElement.className =
+        'leaderboard-win-rate'
+
+    const winRatePercentage =
+        Math.round(entry.winRate * 100)
 
     winRateElement.textContent =
         `${winRatePercentage}% win rate`
@@ -156,6 +315,7 @@ const loadMatches = async (): Promise<void> => {
         if (matches.length === 0) {
             matchesStatus.textContent =
                 'No matches have been played yet.'
+
             return
         }
 
@@ -167,7 +327,10 @@ const loadMatches = async (): Promise<void> => {
 
         matchesList.append(...matchElements)
     } catch (error) {
-        console.error('Failed to load matches:', error)
+        console.error(
+            'Failed to load matches:',
+            error,
+        )
 
         matchesStatus.textContent =
             error instanceof Error
@@ -178,28 +341,41 @@ const loadMatches = async (): Promise<void> => {
 
 const loadLeaderboard = async (): Promise<void> => {
     leaderboardStatus.hidden = false
-    leaderboardStatus.textContent = 'Loading leaderboard...'
+    leaderboardStatus.textContent =
+        'Loading leaderboard...'
+
     leaderboardList.replaceChildren()
 
     try {
-        const leaderboard = await fetchLeaderboard()
+        const leaderboard =
+            await fetchLeaderboard()
 
         if (leaderboard.length === 0) {
             leaderboardStatus.textContent =
                 'No leaderboard entries are available yet.'
+
             return
         }
 
         leaderboardStatus.hidden = true
 
-        const leaderboardElements = leaderboard.map(
-            (entry, index) =>
-                createLeaderboardElement(entry, index + 1),
-        )
+        const leaderboardElements =
+            leaderboard.map(
+                (entry, index) =>
+                    createLeaderboardElement(
+                        entry,
+                        index + 1,
+                    ),
+            )
 
-        leaderboardList.append(...leaderboardElements)
+        leaderboardList.append(
+            ...leaderboardElements,
+        )
     } catch (error) {
-        console.error('Failed to load leaderboard:', error)
+        console.error(
+            'Failed to load leaderboard:',
+            error,
+        )
 
         leaderboardStatus.textContent =
             error instanceof Error
@@ -209,7 +385,8 @@ const loadLeaderboard = async (): Promise<void> => {
 }
 
 const showRoute = (path: string): void => {
-    const route: Route = isRoute(path) ? path : '/'
+    const route: Route =
+        isRoute(path) ? path : '/'
 
     for (const page of Object.values(pages)) {
         page.hidden = true
@@ -233,28 +410,21 @@ const navigateTo = (path: string): void => {
     showRoute(path)
 }
 
-for (const link of navigationLinks) {
-    link.addEventListener('click', (event) => {
-        event.preventDefault()
-
-        const route = link.dataset.route
-
-        if (route) {
-            navigateTo(route)
+const performLogout = async (): Promise<void> => {
+    if (authToken) {
+        try {
+            await logout(authToken)
+        } catch (error) {
+            console.error('Logout failed:', error)
         }
-    })
+    }
+
+    clearAuthentication()
+    navigateTo('/')
 }
 
-window.addEventListener('popstate', () => {
-    showRoute(window.location.pathname)
-})
-
-nicknameForm.addEventListener('submit', (event) => {
-    event.preventDefault()
-
-    const nickname = nicknameInput.value.trim()
-
-    if (!nickname || game) {
+const startGame = (): void => {
+    if (!authenticatedUser || game) {
         return
     }
 
@@ -271,20 +441,160 @@ nicknameForm.addEventListener('submit', (event) => {
         height: 600,
         backgroundColor: '#222222',
         parent: 'game-container',
-        scene: [new GameScene(nickname)],
+        scene: [
+            new GameScene(
+                authenticatedUser.username,
+            ),
+        ],
     }
 
     game = new Phaser.Game(config)
+}
+
+const restoreAuthentication =
+    async (): Promise<void> => {
+        if (!authToken) {
+            updateAuthenticationDisplay()
+            return
+        }
+
+        try {
+            authenticatedUser =
+                await getCurrentUser(authToken)
+        } catch (error) {
+            console.error(
+                'Failed to restore authentication:',
+                error,
+            )
+
+            clearAuthentication()
+            return
+        }
+
+        updateAuthenticationDisplay()
+    }
+
+for (const link of navigationLinks) {
+    link.addEventListener('click', (event) => {
+        event.preventDefault()
+
+        const route = link.dataset.route
+
+        if (route) {
+            navigateTo(route)
+        }
+    })
+}
+
+authNavigationLink.addEventListener(
+    'click',
+    async (event) => {
+        event.preventDefault()
+
+        if (!authenticatedUser) {
+            navigateTo('/login')
+            return
+        }
+
+        await performLogout()
+    },
+)
+
+window.addEventListener('popstate', () => {
+    showRoute(window.location.pathname)
 })
 
-window.addEventListener('return-to-menu', () => {
-    game?.destroy(true)
-    game = null
+loginForm.addEventListener(
+    'submit',
+    async (event) => {
+        event.preventDefault()
 
-    gameContainer.innerHTML = ''
+        loginStatus.textContent = 'Logging in...'
 
-    window.history.pushState({}, '', '/')
-    showRoute('/')
+        try {
+            const result = await login(
+                loginUsernameInput.value,
+                loginPasswordInput.value,
+            )
+
+            storeAuthentication(
+                result.token,
+                result.user,
+            )
+
+            loginForm.reset()
+            loginStatus.textContent = ''
+
+            navigateTo('/')
+        } catch (error) {
+            loginStatus.textContent =
+                error instanceof Error
+                    ? error.message
+                    : 'Login failed.'
+        }
+    },
+)
+
+registerForm.addEventListener(
+    'submit',
+    async (event) => {
+        event.preventDefault()
+
+        registerStatus.textContent =
+            'Creating account...'
+
+        try {
+            const result = await register(
+                registerUsernameInput.value,
+                registerPasswordInput.value,
+            )
+
+            storeAuthentication(
+                result.token,
+                result.user,
+            )
+
+            registerForm.reset()
+            registerStatus.textContent = ''
+
+            navigateTo('/')
+        } catch (error) {
+            registerStatus.textContent =
+                error instanceof Error
+                    ? error.message
+                    : 'Registration failed.'
+        }
+    },
+)
+
+playButton.addEventListener('click', () => {
+    startGame()
 })
 
-showRoute(window.location.pathname)
+logoutButton.addEventListener(
+    'click',
+    async () => {
+        await performLogout()
+    },
+)
+
+window.addEventListener(
+    'return-to-menu',
+    () => {
+        game?.destroy(true)
+        game = null
+
+        gameContainer.innerHTML = ''
+
+        window.history.pushState({}, '', '/')
+        showRoute('/')
+    },
+)
+
+const initialiseApplication =
+    async (): Promise<void> => {
+        await restoreAuthentication()
+        showRoute(window.location.pathname)
+    }
+
+void initialiseApplication()

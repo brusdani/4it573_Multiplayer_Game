@@ -15,7 +15,6 @@
         <a href="/" data-route="/">
             Play
         </a>
-
         <a href="/matches" data-route="/matches">
             Match history
         </a>
@@ -23,32 +22,151 @@
         <a href="/leaderboard" data-route="/leaderboard">
             Leaderboard
         </a>
+
+        <a
+                id="register-navigation-link"
+                href="/register"
+                data-route="/register"
+        >
+            Register
+        </a>
+
+        <a
+                id="auth-navigation-link"
+                href="/login"
+        >
+            Login
+        </a>
     </nav>
+
 </header>
 
 <main>
     <section id="home-page" class="page">
-        <form id="nickname-form">
+        <div class="content-panel">
             <h1>Multiplayer Platformer</h1>
+            <div id="guest-panel">
+                <p>
+                    You must be logged in to play.
+                </p>
 
-            <label for="nickname">
-                Nickname
+                <a href="/register" data-route="/register">
+                    Create account
+                </a>
+
+                <a href="/login" data-route="/login">
+                    Login
+                </a>
+            </div>
+
+            <div id="player-panel" hidden>
+                <p>
+                    Logged in as
+                    <strong id="current-username"></strong>
+                </p>
+
+                <button id="play-button" type="button">
+                    Play
+                </button>
+
+                <button id="logout-button" type="button">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="login-page" class="page" hidden>
+        <form id="login-form" class="content-panel">
+            <h1>Login</h1>
+
+            <label for="login-username">
+                Username
             </label>
 
             <input
-                    id="nickname"
-                    name="nickname"
+                    id="login-username"
+                    name="username"
                     type="text"
-                    minlength="1"
+                    minlength="3"
                     maxlength="20"
-                    placeholder="Enter your nickname"
-                    autocomplete="nickname"
+                    autocomplete="username"
+                    required
+            />
+
+            <label for="login-password">
+                Password
+            </label>
+
+            <input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    minlength="8"
+                    maxlength="100"
+                    autocomplete="current-password"
                     required
             />
 
             <button type="submit">
-                Play
+                Login
             </button>
+
+            <p id="login-status"></p>
+
+            <p>
+                No account yet?
+                <a href="/register" data-route="/register">
+                    Register
+                </a>
+            </p>
+        </form>
+    </section>
+
+    <section id="register-page" class="page" hidden>
+        <form id="register-form" class="content-panel">
+            <h1>Create account</h1>
+
+            <label for="register-username">
+                Username
+            </label>
+
+            <input
+                    id="register-username"
+                    name="username"
+                    type="text"
+                    minlength="3"
+                    maxlength="20"
+                    autocomplete="username"
+                    required
+            />
+
+            <label for="register-password">
+                Password
+            </label>
+
+            <input
+                    id="register-password"
+                    name="password"
+                    type="password"
+                    minlength="8"
+                    maxlength="100"
+                    autocomplete="new-password"
+                    required
+            />
+
+            <button type="submit">
+                Register
+            </button>
+
+            <p id="register-status"></p>
+
+            <p>
+                Already have an account?
+                <a href="/login" data-route="/login">
+                    Login
+                </a>
+            </p>
         </form>
     </section>
 
@@ -75,10 +193,12 @@
             <div id="leaderboard-list"></div>
         </div>
     </section>
+
 </main>
 
 <div id="game-container" hidden></div>
 
 <script type="module" src="/src/main.ts"></script>
+
 </body>
 </html>

@@ -42,7 +42,8 @@ body {
     box-sizing: border-box;
 }
 
-#nickname-form,
+#login-form,
+#register-form,
 .content-panel {
     width: min(520px, 100%);
     display: flex;
@@ -52,28 +53,42 @@ body {
     border-radius: 12px;
     background: #242424;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
 }
 
-#nickname-form h1,
+#login-form h1,
+#register-form h1,
 .content-panel h1 {
     margin: 0 0 8px;
     color: #ffffff;
 }
 
-#nickname-form label {
+#login-form label,
+#register-form label {
     color: #dddddd;
 }
 
-#nickname-form input {
+#login-form input,
+#register-form input {
+    width: 100%;
     padding: 12px;
     border: 1px solid #555555;
     border-radius: 6px;
+    box-sizing: border-box;
     font-size: 16px;
     color: #111111;
     background: #ffffff;
 }
 
-#nickname-form button {
+#login-form input:focus,
+#register-form input:focus {
+    outline: 2px solid #356fd6;
+    outline-offset: 1px;
+}
+
+#login-form button,
+#register-form button,
+#play-button {
     padding: 12px;
     border: 0;
     border-radius: 6px;
@@ -83,8 +98,76 @@ body {
     background: #356fd6;
 }
 
-#nickname-form button:hover {
+#login-form button:hover,
+#register-form button:hover,
+#play-button:hover {
     background: #285bb8;
+}
+
+#logout-button {
+    padding: 12px;
+    border: 1px solid #666666;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #ffffff;
+    background: transparent;
+}
+
+#logout-button:hover {
+    background: #333333;
+}
+
+#login-form p,
+#register-form p,
+#guest-panel p,
+#player-panel p {
+    margin: 0;
+    color: #dddddd;
+}
+
+#login-form a,
+#register-form a,
+#guest-panel a {
+    color: #7fa8ff;
+}
+
+#login-form a:hover,
+#register-form a:hover,
+#guest-panel a:hover {
+    color: #a9c4ff;
+}
+
+#guest-panel,
+#player-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#guest-panel a {
+    display: block;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    text-decoration: none;
+    color: #ffffff;
+    background: #356fd6;
+}
+
+#guest-panel a:hover {
+    color: #ffffff;
+    background: #285bb8;
+}
+
+#current-username {
+    color: #ffffff;
+}
+
+#login-status,
+#register-status {
+    min-height: 20px;
+    color: #ff9a9a;
 }
 
 #game-container {
@@ -192,6 +275,22 @@ body {
 }
 
 @media (max-width: 700px) {
+    .main-navigation {
+        flex-wrap: wrap;
+        gap: 12px 18px;
+    }
+
+    .page {
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    #login-form,
+    #register-form,
+    .content-panel {
+        padding: 24px;
+    }
+
     .match-card {
         grid-template-columns: 1fr;
     }
