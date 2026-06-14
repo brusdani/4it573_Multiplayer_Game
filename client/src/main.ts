@@ -123,7 +123,7 @@ let game: Phaser.Game | null = null
 let authenticatedUser: AuthUser | null = null
 
 let authToken: string | null =
-    localStorage.getItem(AUTH_TOKEN_KEY)
+    sessionStorage.getItem(AUTH_TOKEN_KEY)
 
 if (
     !homePage ||
@@ -195,7 +195,7 @@ const storeAuthentication = (
     authToken = token
     authenticatedUser = user
 
-    localStorage.setItem(AUTH_TOKEN_KEY, token)
+    sessionStorage.setItem(AUTH_TOKEN_KEY, token)
 
     updateAuthenticationDisplay()
 }
@@ -204,7 +204,7 @@ const clearAuthentication = (): void => {
     authToken = null
     authenticatedUser = null
 
-    localStorage.removeItem(AUTH_TOKEN_KEY)
+    sessionStorage.removeItem(AUTH_TOKEN_KEY)
 
     updateAuthenticationDisplay()
 }
