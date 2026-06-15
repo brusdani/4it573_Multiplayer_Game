@@ -1,4 +1,8 @@
-import { desc } from 'drizzle-orm'
+import {
+    desc,
+    eq,
+    or,
+} from 'drizzle-orm'
 import { db } from './db.js'
 import { matchesTable } from './schema.js'
 
@@ -38,5 +42,20 @@ export const getMatches = async () => {
     return db
         .select()
         .from(matchesTable)
+        .orderBy(desc(matchesTable.playedAt))
+}
+
+export const getMatchesByUserId = async (
+    userId: number,
+) => {
+    return db
+        .select()
+        .from(matchesTable)
+        .where(
+            or(
+                eq(matchesTable.player1UserId, userId),
+                eq(matchesTable.player2UserId, userId),
+            ),
+        )
         .orderBy(desc(matchesTable.playedAt))
 }

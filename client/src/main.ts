@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import './style.css'
 import { GameScene } from './scenes/GameScene'
 import {
-    fetchMatches,
+    fetchMyMatches,
     type Match,
 } from './api/matches'
 import {
@@ -231,6 +231,21 @@ const createMatchElement = (
     const matchElement = document.createElement('article')
     matchElement.className = 'match-card'
 
+    const currentPlayerNickname =
+        authenticatedUser?.username
+
+    const isDraw = match.winnerNickname === null
+    const isWin =
+        match.winnerNickname === currentPlayerNickname
+
+    if (isDraw) {
+        matchElement.classList.add('match-draw')
+    } else if (isWin) {
+        matchElement.classList.add('match-win')
+    } else {
+        matchElement.classList.add('match-loss')
+    }
+
     const resultElement =
         document.createElement('strong')
 
@@ -241,9 +256,13 @@ const createMatchElement = (
     const winnerElement =
         document.createElement('span')
 
-    winnerElement.textContent = match.winnerNickname
-        ? `Winner: ${match.winnerNickname}`
-        : 'Draw'
+    if (isDraw) {
+        winnerElement.textContent = 'Draw'
+    } else if (isWin) {
+        winnerElement.textContent = 'Victory'
+    } else {
+        winnerElement.textContent = 'Defeat'
+    }
 
     const playedAtElement =
         document.createElement('time')
@@ -332,8 +351,17 @@ const loadMatches = async (): Promise<void> => {
     matchesStatus.textContent = 'Loading matches...'
     matchesList.replaceChildren()
 
+    const token = authToken
+    if (!token || !authenticatedUser) {
+        matchesStatus.textContent =
+            'Log in to view your match history'
+
+        return
+    }
+    matchesStatus.textContent = 'Loading your matches...'
+
     try {
-        const matches = await fetchMatches()
+        const matches = await fetchMyMatches(token)
 
         if (matches.length === 0) {
             matchesStatus.textContent =
@@ -358,7 +386,7 @@ const loadMatches = async (): Promise<void> => {
         matchesStatus.textContent =
             error instanceof Error
                 ? error.message
-                : 'Failed to load match history.'
+                : 'Failed to load your match history.'
     }
 }
 

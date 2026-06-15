@@ -305,6 +305,31 @@ body {
     background: #1d2b45;
     box-shadow: 0 0 0 1px rgba(53, 111, 214, 0.25);
 }
+.match-win {
+       border-color: #3f9f63;
+       background: rgba(40, 110, 65, 0.22);
+   }
+
+.match-loss {
+    border-color: #c85c5c;
+    background: rgba(125, 45, 45, 0.22);
+}
+
+.match-draw {
+    border-color: #4f82d1;
+    background: rgba(45, 75, 125, 0.22);
+}
+.match-win span {
+    color: #7de39d;
+}
+
+.match-loss span {
+    color: #ff8e8e;
+}
+
+.match-draw span {
+    color: #83b4ff;
+}
 
 @media (max-width: 700px) {
     .main-navigation {

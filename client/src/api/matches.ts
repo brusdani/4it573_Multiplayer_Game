@@ -8,14 +8,43 @@ export type Match = {
     playedAt: string
 }
 
-export const fetchMatches = async (): Promise<Match[]> => {
-    const response = await fetch('http://localhost:3000/matches')
+type ErrorResponse = {
+    error?: string
+}
+
+const parseError = async (
+    response: Response,
+): Promise<string> => {
+    try {
+        const data =
+            await response.json() as ErrorResponse
+
+        return (
+            data.error ??
+            'Failed to load match history.'
+        )
+    } catch {
+        return 'Failed to load match history.'
+    }
+}
+
+export const fetchMyMatches = async (
+    token: string,
+): Promise<Match[]> => {
+    const response = await fetch(
+        'http://localhost:3000/matches/me',
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    )
 
     if (!response.ok) {
-        throw new Error('Failed to load match history.')
+        throw new Error(
+            await parseError(response),
+        )
     }
 
-    const matches = await response.json() as Match[]
-
-    return matches
+    return await response.json() as Match[]
 }
