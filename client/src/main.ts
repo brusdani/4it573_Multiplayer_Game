@@ -2,9 +2,9 @@ import Phaser from 'phaser'
 import './style.css'
 import { GameScene } from './scenes/GameScene'
 import {
-    fetchMyMatches,
-    type Match,
-} from './api/matches'
+    clearMatchHistory,
+    loadMatches,
+} from './matches/matches-ui'
 import {
     clearCurrentPlayerPosition,
     loadLeaderboard,
@@ -102,12 +102,6 @@ const navigationLinks =
         '[data-route]',
     )
 
-const matchesStatus =
-    document.querySelector<HTMLElement>('#matches-status')
-
-const matchesList =
-    document.querySelector<HTMLElement>('#matches-list')
-
 let game: Phaser.Game | null = null
 
 let authenticatedUser: AuthUser | null = null
@@ -137,9 +131,7 @@ if (
     !registerPasswordInput ||
     !registerStatus ||
     !registerNavigationLink ||
-    !authNavigationLink ||
-    !matchesStatus ||
-    !matchesList
+    !authNavigationLink
 ) {
     throw new Error('Required page elements were not found')
 }
@@ -195,107 +187,8 @@ const clearAuthentication = (): void => {
     sessionStorage.removeItem(AUTH_TOKEN_KEY)
 
     clearCurrentPlayerPosition()
-
+    clearMatchHistory()
     updateAuthenticationDisplay()
-}
-
-const createMatchElement = (
-    match: Match,
-): HTMLElement => {
-    const matchElement = document.createElement('article')
-    matchElement.className = 'match-card'
-
-    const currentPlayerNickname =
-        authenticatedUser?.username
-
-    const isDraw = match.winnerNickname === null
-    const isWin =
-        match.winnerNickname === currentPlayerNickname
-
-    if (isDraw) {
-        matchElement.classList.add('match-draw')
-    } else if (isWin) {
-        matchElement.classList.add('match-win')
-    } else {
-        matchElement.classList.add('match-loss')
-    }
-
-    const resultElement =
-        document.createElement('strong')
-
-    resultElement.textContent =
-        `${match.player1Nickname} ${match.player1Score}` +
-        ` : ${match.player2Score} ${match.player2Nickname}`
-
-    const winnerElement =
-        document.createElement('span')
-
-    if (isDraw) {
-        winnerElement.textContent = 'Draw'
-    } else if (isWin) {
-        winnerElement.textContent = 'Victory'
-    } else {
-        winnerElement.textContent = 'Defeat'
-    }
-
-    const playedAtElement =
-        document.createElement('time')
-
-    playedAtElement.dateTime = match.playedAt
-    playedAtElement.textContent =
-        new Date(match.playedAt).toLocaleString()
-
-    matchElement.append(
-        resultElement,
-        winnerElement,
-        playedAtElement,
-    )
-
-    return matchElement
-}
-
-const loadMatches = async (): Promise<void> => {
-    matchesStatus.hidden = false
-    matchesStatus.textContent = 'Loading matches...'
-    matchesList.replaceChildren()
-
-    const token = authToken
-    if (!token || !authenticatedUser) {
-        matchesStatus.textContent =
-            'Log in to view your match history'
-
-        return
-    }
-    matchesStatus.textContent = 'Loading your matches...'
-
-    try {
-        const matches = await fetchMyMatches(token)
-
-        if (matches.length === 0) {
-            matchesStatus.textContent =
-                'No matches have been played yet.'
-
-            return
-        }
-
-        matchesStatus.hidden = true
-
-        const matchElements = matches
-            .slice(0, 20)
-            .map(createMatchElement)
-
-        matchesList.append(...matchElements)
-    } catch (error) {
-        console.error(
-            'Failed to load matches:',
-            error,
-        )
-
-        matchesStatus.textContent =
-            error instanceof Error
-                ? error.message
-                : 'Failed to load your match history.'
-    }
 }
 
 const showRoute = (path: string): void => {
@@ -311,7 +204,10 @@ const showRoute = (path: string): void => {
     mainHeader.hidden = false
 
     if (route === '/matches') {
-        void loadMatches()
+        void loadMatches(
+            authToken,
+            authenticatedUser,
+        )
     }
     if (route === '/leaderboard') {
         void loadLeaderboard(authenticatedUser)
