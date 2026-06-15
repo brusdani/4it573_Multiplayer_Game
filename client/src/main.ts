@@ -6,9 +6,9 @@ import {
     type Match,
 } from './api/matches'
 import {
-    fetchLeaderboard,
-    type LeaderboardEntry,
-} from './api/leaderboard'
+    clearCurrentPlayerPosition,
+    loadLeaderboard,
+} from './leaderboard/leaderboard-ui'
 import {
     getCurrentUser,
     login,
@@ -18,7 +18,6 @@ import {
 } from './api/auth'
 
 const AUTH_TOKEN_KEY = 'authToken'
-const LEADERBOARD_LIMIT = 10
 
 const homePage =
     document.querySelector<HTMLElement>('#home-page')
@@ -109,26 +108,6 @@ const matchesStatus =
 const matchesList =
     document.querySelector<HTMLElement>('#matches-list')
 
-const leaderboardStatus =
-    document.querySelector<HTMLElement>(
-        '#leaderboard-status',
-    )
-
-const leaderboardList =
-    document.querySelector<HTMLElement>(
-        '#leaderboard-list',
-    )
-
-const currentPlayerSection =
-    document.querySelector<HTMLElement>(
-        '#current-player-section',
-    )
-
-const currentPlayerPosition =
-    document.querySelector<HTMLElement>(
-        '#current-player-position',
-    )
-
 let game: Phaser.Game | null = null
 
 let authenticatedUser: AuthUser | null = null
@@ -160,11 +139,7 @@ if (
     !registerNavigationLink ||
     !authNavigationLink ||
     !matchesStatus ||
-    !matchesList ||
-    !leaderboardStatus ||
-    !leaderboardList ||
-    !currentPlayerSection ||
-    !currentPlayerPosition
+    !matchesList
 ) {
     throw new Error('Required page elements were not found')
 }
@@ -219,8 +194,7 @@ const clearAuthentication = (): void => {
 
     sessionStorage.removeItem(AUTH_TOKEN_KEY)
 
-    currentPlayerSection.hidden = true
-    currentPlayerPosition.replaceChildren()
+    clearCurrentPlayerPosition()
 
     updateAuthenticationDisplay()
 }
@@ -280,72 +254,6 @@ const createMatchElement = (
     return matchElement
 }
 
-const createLeaderboardElement = (
-    entry: LeaderboardEntry,
-    position: number,
-    isCurrentPlayer = false,
-): HTMLElement => {
-    const entryElement =
-        document.createElement('article')
-
-    entryElement.className = 'leaderboard-entry'
-
-    if (isCurrentPlayer) {
-        entryElement.classList.add(
-            'current-player-entry',
-        )
-    }
-
-    const positionElement =
-        document.createElement('strong')
-
-    positionElement.className =
-        'leaderboard-position'
-
-    positionElement.textContent = `${position}.`
-
-    const nicknameElement =
-        document.createElement('strong')
-
-    nicknameElement.className =
-        'leaderboard-nickname'
-
-    nicknameElement.textContent = entry.nickname
-
-    const statisticsElement =
-        document.createElement('span')
-
-    statisticsElement.className =
-        'leaderboard-statistics'
-
-    statisticsElement.textContent =
-        `${entry.wins} W · ` +
-        `${entry.losses} L · ` +
-        `${entry.draws} D · ` +
-        `${entry.gamesPlayed} games`
-
-    const winRateElement =
-        document.createElement('span')
-
-    winRateElement.className =
-        'leaderboard-win-rate'
-
-    const winRatePercentage =
-        Math.round(entry.winRate * 100)
-
-    winRateElement.textContent =
-        `${winRatePercentage}% win rate`
-
-    entryElement.append(
-        positionElement,
-        nicknameElement,
-        statisticsElement,
-        winRateElement,
-    )
-
-    return entryElement
-}
-
 const loadMatches = async (): Promise<void> => {
     matchesStatus.hidden = false
     matchesStatus.textContent = 'Loading matches...'
@@ -390,88 +298,6 @@ const loadMatches = async (): Promise<void> => {
     }
 }
 
-const loadLeaderboard = async (): Promise<void> => {
-    leaderboardStatus.hidden = false
-    leaderboardStatus.textContent =
-        'Loading leaderboard...'
-
-    leaderboardList.replaceChildren()
-    currentPlayerPosition.replaceChildren()
-    currentPlayerSection.hidden = true
-
-    try {
-        const leaderboard =
-            await fetchLeaderboard()
-
-        if (leaderboard.length === 0) {
-            leaderboardStatus.textContent =
-                'No leaderboard entries are available yet.'
-
-            return
-        }
-
-        leaderboardStatus.hidden = true
-
-        const topPlayers = leaderboard.slice(
-            0,
-            LEADERBOARD_LIMIT,
-        )
-
-        const topPlayerElements = topPlayers.map(
-            (entry, index) =>
-                createLeaderboardElement(
-                    entry,
-                    index + 1,
-                    entry.userId ===
-                        authenticatedUser?.id,
-                ),
-        )
-
-        leaderboardList.append(...topPlayerElements)
-
-        if (!authenticatedUser) {
-            return
-        }
-
-        const currentPlayerIndex =
-            leaderboard.findIndex(
-                (entry) =>
-                    entry.userId ===
-                    authenticatedUser?.id,
-            )
-
-        if (currentPlayerIndex === -1) {
-            return
-        }
-
-        const currentPlayer =
-            leaderboard[currentPlayerIndex]
-
-        const currentPlayerElement =
-            createLeaderboardElement(
-                currentPlayer,
-                currentPlayerIndex + 1,
-                true,
-            )
-
-        currentPlayerPosition.append(
-            currentPlayerElement,
-        )
-
-        currentPlayerSection.hidden = false
-    } catch (error) {
-        console.error(
-            'Failed to load leaderboard:',
-            error,
-        )
-
-        leaderboardStatus.textContent =
-            error instanceof Error
-                ? error.message
-                : 'Failed to load leaderboard.'
-    }
-}
-
 const showRoute = (path: string): void => {
     const route: Route =
         isRoute(path) ? path : '/'
@@ -487,9 +313,8 @@ const showRoute = (path: string): void => {
     if (route === '/matches') {
         void loadMatches()
     }
-
     if (route === '/leaderboard') {
-        void loadLeaderboard()
+        void loadLeaderboard(authenticatedUser)
     }
 }
 
