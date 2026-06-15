@@ -1,20 +1,25 @@
 # Multiplayer Platformer
 
-Semestral project for the **4IT573 – Základy Node.js** course.
+Semester project for the **4IT573 – Základy Node.js** course.
 
-The application is a real-time multiplayer platform game for two players. Players join matchmaking, move around a shared platform map, collect items and compete for the highest score before the time limit expires.
+The application is a real-time multiplayer platform game for two players. Players create an account, join matchmaking, move around a shared platform map, collect items and compete for the highest score before the time limit expires.
 
 The project demonstrates several Node.js concepts covered during the course:
 
-* web server,
-* WebSockets,
+* web server development,
+* REST API endpoints,
+* WebSocket communication,
 * asynchronous programming,
 * file manipulation,
-* relational database,
+* relational databases,
+* authentication and session management,
 * automated testing.
 
 ## Main features
 
+* user registration and login,
+* persistent player accounts,
+* authenticated WebSocket connections,
 * matchmaking for two players,
 * real-time communication using WebSockets,
 * server-authoritative player movement,
@@ -22,11 +27,7 @@ The project demonstrates several Node.js concepts covered during the course:
 * randomly spawning collectible items,
 * score tracking and match timer,
 * match result evaluation,
-* persistent match history in SQLite,
-* leaderboard calculated from stored matches,
-* nickname selection,
-* ability to queue for another match,
-* match history and leaderboard pages,
+* player-specific match history,
 * automated tests using AVA.
 
 ## Technologies
@@ -56,6 +57,7 @@ The project demonstrates several Node.js concepts covered during the course:
 ├── data/                   # Game map configuration
 ├── drizzle/                # Database migrations
 ├── src/
+│   ├── auth/               # Registration, login and session handling
 │   ├── config/             # Game configuration loading and validation
 │   ├── database/           # Database connection, schema and repositories
 │   ├── game/               # Game rooms and gameplay logic
@@ -137,9 +139,11 @@ http://localhost:5173
 
 ### 3. Start a match
 
-Open the client in two browser windows or tabs.
+Open the client in two separate browser tabs or windows.
 
-Enter a different nickname in each window and click **Play**. The first player waits in the matchmaking queue. The match starts automatically after the second player joins.
+Register or log in using a different account in each tab and click **Play**.
+
+The first player waits in the matchmaking queue. The match starts automatically after the second player joins.
 
 ## Controls
 
@@ -151,47 +155,53 @@ Enter a different nickname in each window and click **Play**. The first player w
 | Q               | Join the matchmaking queue again after a match |
 | M               | Return to the main menu                        |
 
+## Authentication
+
+User accounts are stored in the SQLite database.
+
+Passwords are hashed before being stored. 
+
+The client stores the token in `sessionStorage`. This allows different accounts to be used in separate browser tabs.
+
 ## HTTP endpoints
+
+### `POST /auth/register`
+
+Creates a new user account and authentication session.
+
+### `POST /auth/login`
+
+Authenticates an existing user and creates a new session.
+
+### `GET /auth/me`
+
+Returns the currently authenticated user.
+
+The endpoint requires a valid token.
+
+### `POST /auth/logout`
+
+Invalidates the current authentication session.
+
+The endpoint requires a valid token.
 
 ### `GET /matches`
 
-Returns stored matches ordered from newest to oldest.
+Returns all stored matches ordered from newest to oldest.
+
+This endpoint is used for global match data and leaderboard calculation.
 
 Example response:
 
-```json
-[
-  {
-    "id": 1,
-    "player1Nickname": "Daniel",
-    "player2Nickname": "Opponent",
-    "player1Score": 3,
-    "player2Score": 1,
-    "winnerNickname": "Daniel",
-    "playedAt": "2026-06-13T10:00:00.000Z"
-  }
-]
-```
+### `GET /matches/me`
+
+Returns only matches involving the authenticated user.
 
 ### `GET /leaderboard`
 
 Returns aggregated player statistics calculated from stored matches.
 
-Example response:
-
-```json
-[
-  {
-    "nickname": "Daniel",
-    "gamesPlayed": 3,
-    "wins": 2,
-    "losses": 1,
-    "draws": 0,
-    "totalScore": 8,
-    "winRate": 0.6666666667
-  }
-]
-```
+The client displays the top ten players. When a user is logged in, their own position is also displayed separately below the leaderboard.
 
 ## WebSocket communication
 
@@ -200,34 +210,18 @@ The WebSocket endpoint is:
 ```text
 ws://localhost:3000/ws
 ```
+### Server messages
 
-The client sends messages such as:
+The server sends messages for:
 
-```json
-{
-  "type": "join",
-  "nickname": "Daniel"
-}
-```
+* connection establishment,
+* successful authentication,
+* matchmaking state,
+* match start,
+* real-time game state,
+* match results,
+* validation and authentication errors.
 
-```json
-{
-  "type": "input",
-  "input": {
-    "left": false,
-    "right": true,
-    "jump": false
-  }
-}
-```
-
-```json
-{
-  "type": "queue"
-}
-```
-
-The server sends connection, matchmaking, game state and match result messages.
 
 ## Game configuration
 
@@ -250,6 +244,25 @@ The configuration contains:
 * platforms.
 
 The file is loaded asynchronously using `node:fs/promises` and validated when the server starts.
+
+## Match history
+
+The match history page displays only matches involving the currently authenticated user.
+
+Each match is visually distinguished by its result:
+
+* green for a win,
+* red for a loss,
+* blue for a draw.
+
+## Leaderboard
+
+* games played,
+* wins,
+* losses,
+* draws,
+* total score,
+* win rate.
 
 ## Building the project
 
@@ -282,40 +295,33 @@ Run all tests:
 npm test
 ```
 
-The command first compiles the TypeScript backend and then tests the generated JavaScript files.
-
-Current tests cover:
+Current tests cover areas such as:
 
 * WebSocket message validation,
-* valid and invalid join messages,
+* authentication message validation,
+* join message validation,
 * input message validation,
-* queue messages,
+* queue message validation,
 * malformed JSON,
 * random item spawn selection,
 * prevention of repeated item spawn positions,
 * leaderboard statistics,
 * leaderboard sorting,
+* grouping leaderboard entries by user ID,
 * empty leaderboard behaviour.
 
 ## Current limitations
 
-* Players are identified only by nicknames.
-* There is no registration or authentication.
-* Leaving a match disconnects the player and cancels the room.
 * Reconnecting to an unfinished match is not supported.
 * The game currently uses simple geometric shapes instead of animated sprites.
-* The leaderboard treats identical nicknames as the same player.
+* Password changes and account recovery are not implemented.
+* Matchmaking pairs players in arrival order and does not consider player skill.
 
 ## Possible future improvements
 
-* user registration and login,
-* persistent player accounts,
-* linking matches to user IDs,
-* authenticated WebSocket connections,
-* player-specific match history,
 * reconnection to interrupted matches,
-* multiple maps,
+* skill-based matchmaking,
+* password changes and account recovery,
 * character sprites and animations,
 * sound effects,
-* improved matchmaking,
-* additional game modes.
+* power-ups and temporary player effects
