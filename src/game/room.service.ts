@@ -1,6 +1,6 @@
-import type { WSContext } from 'hono/ws'
-import type { GameConfig } from '../config/game-config.js'
-import type { SaveMatchInput } from '../database/match.repository.js'
+import type {WSContext} from 'hono/ws'
+import type {GameConfig} from '../config/game-config.js'
+import type {SaveMatchInput} from '../database/match.repository.js'
 import type {
     Player,
     PlayerId,
@@ -10,7 +10,7 @@ import {
     randomId,
     randomItem,
 } from './game.utils.js'
-import { broadcast } from '../websocket/ws.utils.js'
+import {broadcast} from '../websocket/ws.utils.js'
 
 type SaveMatch = (match: SaveMatchInput) => Promise<void>
 
@@ -40,7 +40,11 @@ export const createRoomService = (
         return waitingPlayer?.id === playerId
     }
 
-    const finishRoom = async (room: Room) => {
+
+    const finishRoom = async (
+        room: Room,
+        forcedWinner?: Player,
+    ) => {
         if (room.intervalId) {
             clearInterval(room.intervalId)
         }
@@ -51,16 +55,22 @@ export const createRoomService = (
         let winnerUserId: number | null = null
         let winnerNickname: string | null = null
 
-        if (player1.score > player2.score) {
-            winnerId = player1.id
-            winnerUserId = player1.userId
-            winnerNickname = player1.nickname
-        }
+        if (forcedWinner) {
+            winnerId = forcedWinner.id
+            winnerUserId = forcedWinner.userId
+            winnerNickname = forcedWinner.nickname
+        } else {
+            if (player1.score > player2.score) {
+                winnerId = player1.id
+                winnerUserId = player1.userId
+                winnerNickname = player1.nickname
+            }
 
-        if (player2.score > player1.score) {
-            winnerId = player2.id
-            winnerUserId = player2.userId
-            winnerNickname = player2.nickname
+            if (player2.score > player1.score) {
+                winnerId = player2.id
+                winnerUserId = player2.userId
+                winnerNickname = player2.nickname
+            }
         }
 
         await saveMatch({
@@ -70,14 +80,19 @@ export const createRoomService = (
 
             player1Nickname: player1.nickname,
             player2Nickname: player2.nickname,
+
             player1Score: player1.score,
             player2Score: player2.score,
+
             winnerNickname,
         })
 
         broadcast(room, {
             type: 'gameOver',
             winnerId,
+            reason: forcedWinner
+                ? 'forfeit'
+                : 'timeExpired',
             scores: room.players.map((player) => ({
                 playerId: player.id,
                 nickname: player.nickname,
@@ -296,34 +311,63 @@ export const createRoomService = (
     const removePlayer = (ws: WSContext) => {
         if (waitingPlayer?.ws === ws) {
             waitingPlayer = null
-            console.log('Waiting player disconnected')
+
+            console.log(
+                'Waiting player disconnected',
+            )
+
             return
         }
 
         for (const room of rooms.values()) {
-            const disconnectedPlayer = room.players.find(
-                (player) => player.ws === ws,
-            )
+            const disconnectedPlayer =
+                room.players.find(
+                    (player) => player.ws === ws,
+                )
 
             if (!disconnectedPlayer) {
                 continue
             }
 
-            if (room.intervalId) {
-                clearInterval(room.intervalId)
+            if (room.isFinishing) {
+                return
             }
 
-            broadcast(room, {
-                type: 'error',
-                message:
-                    `${disconnectedPlayer.nickname} disconnected. Match cancelled.`,
+            const remainingPlayer =
+                room.players.find(
+                    (player) =>
+                        player.id !==
+                        disconnectedPlayer.id,
+                )
+
+            if (!remainingPlayer) {
+                rooms.delete(room.id)
+                return
+            }
+
+            room.isFinishing = true
+
+            console.log(
+                `${disconnectedPlayer.nickname} disconnected. ` +
+                `${remainingPlayer.nickname} wins by forfeit.`,
+            )
+
+            void finishRoom(
+                room,
+                remainingPlayer,
+            ).catch((error) => {
+                console.error(
+                    'Failed to finish forfeited room:',
+                    error,
+                )
+
+                rooms.delete(room.id)
             })
 
-            rooms.delete(room.id)
-            console.log('Room cancelled because player disconnected')
             return
         }
     }
+
 
     return {
         addPlayerToMatchmaking,

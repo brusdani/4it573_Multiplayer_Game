@@ -68,6 +68,7 @@ export type ServerMessage =
     | {
     type: 'gameOver'
     winnerId: string | null
+    reason: 'forfeit' | 'timeExpired'
     scores: Array<{
         playerId: string
         nickname: string

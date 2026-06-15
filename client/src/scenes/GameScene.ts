@@ -141,7 +141,7 @@ export class GameScene extends Phaser.Scene {
                 message.groundY,
                 message.arena.width,
                 message.arena.height,
-                )
+            )
             return
         }
 
@@ -158,29 +158,55 @@ export class GameScene extends Phaser.Scene {
         if (message.type === 'gameOver') {
             this.matchActive = false
             this.canQueueAgain = true
+
             this.lastInput = {
                 left: false,
                 right: false,
-                jump: false
+                jump: false,
             }
+
             const winner = message.scores.find(
-                (player) => player.playerId === message.winnerId,
+                (player) =>
+                    player.playerId === message.winnerId,
             )
 
             const scoreLine = message.scores
-                .map((player) => `${player.nickname}: ${player.score}`)
+                .map(
+                    (player) =>
+                        `${player.nickname}: ${player.score}`,
+                )
                 .join(' | ')
+
+            const localPlayerWon =
+                message.winnerId === this.localPlayerId
+
+            let resultMessage: string
+
+            if (message.reason === 'forfeit') {
+                resultMessage = localPlayerWon
+                    ? 'Opponent disconnected.\nYou win by forfeit!'
+                    : 'Match ended by forfeit.'
+            } else if (!winner) {
+                resultMessage = 'Draw!'
+            } else if (localPlayerWon) {
+                resultMessage = 'You win!'
+            } else {
+                resultMessage =
+                    `${winner.nickname} wins!`
+            }
 
             this.statusText
                 .setVisible(true)
                 .setText(
-                    winner
-                        ? `${winner.nickname} wins!\n${scoreLine}\nPress Q to queue again`
-                        : `Draw!\n${scoreLine}\nPress Q to queue again`,
+                    `${resultMessage}\n` +
+                    `${scoreLine}\n` +
+                    'Press Q to queue again\n' +
+                    'Press M to return to menu',
                 )
 
             return
         }
+
 
         if (message.type === 'error') {
             this.statusText
@@ -188,6 +214,7 @@ export class GameScene extends Phaser.Scene {
                 .setText(message.message)
         }
     }
+
     private clearPlayers(): void {
         for (const playerObject of this.playerObjects.values()) {
             playerObject.destroy()
@@ -275,6 +302,7 @@ export class GameScene extends Phaser.Scene {
 
         this.scoreText.setText(scoreLine)
     }
+
     update(): void {
         if (Phaser.Input.Keyboard.JustDown(this.menuKey)) {
             this.gameSocket.disconnect()
