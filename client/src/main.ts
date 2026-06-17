@@ -1,6 +1,9 @@
-import Phaser from 'phaser'
 import './style.css'
-import { GameScene } from './scenes/GameScene'
+import {
+    ensureGameHidden,
+    hideGame,
+    showGame,
+} from './game/game-controller'
 import {
     clearMatchHistory,
     loadMatches,
@@ -33,12 +36,6 @@ const matchesPage =
 
 const leaderboardPage =
     document.querySelector<HTMLElement>('#leaderboard-page')
-
-const mainHeader =
-    document.querySelector<HTMLElement>('.main-header')
-
-const gameContainer =
-    document.querySelector<HTMLElement>('#game-container')
 
 const guestPanel =
     document.querySelector<HTMLElement>('#guest-panel')
@@ -102,8 +99,6 @@ const navigationLinks =
         '[data-route]',
     )
 
-let game: Phaser.Game | null = null
-
 let authenticatedUser: AuthUser | null = null
 
 let authToken: string | null =
@@ -115,8 +110,6 @@ if (
     !registerPage ||
     !matchesPage ||
     !leaderboardPage ||
-    !mainHeader ||
-    !gameContainer ||
     !guestPanel ||
     !playerPanel ||
     !currentUsername ||
@@ -200,8 +193,7 @@ const showRoute = (path: string): void => {
     }
 
     pages[route].hidden = false
-    gameContainer.hidden = true
-    mainHeader.hidden = false
+    ensureGameHidden()
 
     if (route === '/matches') {
         void loadMatches(
@@ -233,29 +225,16 @@ const performLogout = async (): Promise<void> => {
 }
 
 const startGame = (): void => {
-    if (!authenticatedUser || !authToken || game) {
+    const token = authToken
+
+    if (!authenticatedUser || !token) {
         return
     }
 
-    for (const page of Object.values(pages)) {
-        page.hidden = true
-    }
-
-    mainHeader.hidden = true
-    gameContainer.hidden = false
-
-    const config: Phaser.Types.Core.GameConfig = {
-        type: Phaser.AUTO,
-        width: 800,
-        height: 600,
-        backgroundColor: '#222222',
-        parent: 'game-container',
-        scene: [
-            new GameScene(authToken),
-        ],
-    }
-
-    game = new Phaser.Game(config)
+    showGame(
+        token,
+        Object.values(pages),
+    )
 }
 
 const restoreAuthentication =
@@ -388,10 +367,7 @@ logoutButton.addEventListener(
 window.addEventListener(
     'return-to-menu',
     () => {
-        game?.destroy(true)
-        game = null
-
-        gameContainer.innerHTML = ''
+        hideGame()
 
         window.history.pushState({}, '', '/')
         showRoute('/')
