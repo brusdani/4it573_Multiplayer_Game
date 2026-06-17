@@ -13,7 +13,7 @@ export class GameScene extends Phaser.Scene {
     private scoreText!: Phaser.GameObjects.Text
 
 
-    private playerObjects = new Map<string, Phaser.GameObjects.Rectangle>()
+    private playerObjects = new Map<string, Phaser.GameObjects.Sprite>()
     private itemObject!: Phaser.GameObjects.Arc
     private platformObjects: Phaser.GameObjects.Rectangle[] = []
 
@@ -43,11 +43,46 @@ export class GameScene extends Phaser.Scene {
         this.authToken = authToken
     }
 
+    preload(): void {
+        this.load.spritesheet(
+            'player', '/assets/player2.png',
+            {
+                frameWidth: 20, frameHeight: 20,
+            },
+        )
+    }
+
     create(): void {
 
         if (!this.input.keyboard) {
             throw new Error('Keyboard input is unavailable')
         }
+        this.anims.create({
+            key: 'player-walk-right',
+            frames: this.anims.generateFrameNumbers(
+                'player',
+                {
+                    start: 1,
+                    end: 2,
+                },
+            ),
+            frameRate: 6,
+            repeat: -1,
+        })
+
+        this.anims.create({
+            key: 'player-walk-left',
+            frames: this.anims.generateFrameNumbers(
+                'player',
+                {
+                    start: 3,
+                    end: 4,
+                },
+            ),
+            frameRate: 6,
+            repeat: -1,
+        })
+
 
         this.cursors = this.input.keyboard.createCursorKeys()
 
@@ -260,27 +295,66 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    private updatePlayers(players: PlayerState[]): void {
+
+    private updatePlayers(
+        players: PlayerState[],
+    ): void {
         for (const player of players) {
-            let playerObject = this.playerObjects.get(player.id)
+            let playerObject =
+                this.playerObjects.get(player.id)
+
+            const isLocalPlayer =
+                player.id === this.localPlayerId
 
             if (!playerObject) {
-                playerObject = this.add.rectangle(
+                playerObject = this.add.sprite(
                     player.x,
                     player.y,
-                    32,
-                    32,
-                    player.id === this.localPlayerId
-                        ? 0x4da3ff
-                        : 0xff4d4d
+                    'player',
+                    0,
                 )
 
-                this.playerObjects.set(player.id, playerObject)
+                playerObject.setScale(1.6)
+
+                if (!isLocalPlayer) {
+                    playerObject.setTint(0xff4d4d)
+                }
+
+                this.playerObjects.set(
+                    player.id,
+                    playerObject,
+                )
             }
 
-            playerObject.setPosition(player.x, player.y)
+            playerObject.setPosition(
+                player.x,
+                player.y,
+            )
+
+            if (!isLocalPlayer) {
+                playerObject.stop()
+                playerObject.setFrame(0)
+
+                continue
+            }
+
+            if (this.lastInput.left) {
+                playerObject.play(
+                    'player-walk-left',
+                    true,
+                )
+            } else if (this.lastInput.right) {
+                playerObject.play(
+                    'player-walk-right',
+                    true,
+                )
+            } else {
+                playerObject.stop()
+                playerObject.setFrame(0)
+            }
         }
     }
+
 
     private updateItem(x: number, y: number): void {
         this.itemObject
